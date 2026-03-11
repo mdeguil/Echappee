@@ -9,6 +9,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
+// lance l'importation
+// php bin/console app:importer-lieux  | php bin/console app:importer-lieux -vvv
+
 #[AsCommand(
     name: 'app:importer-lieux',
     description: 'Importe les lieux touristiques de la Charente depuis l\'API Data16',

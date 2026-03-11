@@ -2,28 +2,15 @@
 
 namespace App\Service;
 
+use App\Entity\Categorie;
 use App\Entity\DetailLieu;
 use App\Entity\Lieu;
+use App\Repository\CategorieRepository;
 use App\Repository\LieuRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-/**
- * Importe le patrimoine culturel de la Charente depuis l'API ArcGIS Data16.
- * API publique — aucune clé requise.
- *
- * Correspondance API → entités :
- *   properties.Nom                         → Lieu.nom
- *   properties.Latitude                    → Lieu.latitude
- *   properties.Longitude                   → Lieu.longitude
- *   properties.Type_de_patrimoine_culturel → Lieu.categorie (string)
- *   properties.Descriptif_court            → DetailLieu.description
- *   properties.Période_en_clair            → DetailLieu.horaires
- *   properties.Marque_Tourisme_et_Handicap → DetailLieu.accessibilite
- *   0 (absent dans l'API)                  → DetailLieu.tarif
- *   properties.Moyens_de_communication     → DetailLieu.photos (URL site web)
- */
 class ImportationLieuxService
 {
     private const URL_DATASET = 'https://services8.arcgis.com/Mu477K6amNa9Pa6f/arcgis/rest/services/Patrimoine_Culturel_de_Charente/FeatureServer/3/query?outFields=*&where=1%3D1&f=geojson';
@@ -32,6 +19,7 @@ class ImportationLieuxService
         private readonly HttpClientInterface    $clientHttp,
         private readonly EntityManagerInterface $gestionnaireEntites,
         private readonly LieuRepository         $depotLieu,
+        private readonly CategorieRepository    $depotCategorie,
         private readonly LoggerInterface        $journalisation,
     ) {}
 
@@ -40,20 +28,14 @@ class ImportationLieuxService
      */
     public function importerLieuxCharente(): array
     {
+        // ── Étape 1 : catégories en base avant les lieux ──────────────────
+        $this->initialiserCategories();
+
+        // ── Étape 2 : import des lieux ────────────────────────────────────
         $this->journalisation->info('[Data16] Import du patrimoine culturel...');
 
-        $reponse = $this->clientHttp->request('GET', self::URL_DATASET);
-
-        if ($reponse->getStatusCode() !== 200) {
-            throw new \RuntimeException('Erreur HTTP : ' . $reponse->getStatusCode());
-        }
-
+        $reponse  = $this->clientHttp->request('GET', self::URL_DATASET);
         $features = $reponse->toArray()['features'] ?? [];
-
-        if (empty($features)) {
-            $this->journalisation->warning('[Data16] Aucun résultat.');
-            return ['creations' => 0, 'misesAJour' => 0, 'erreurs' => 0, 'total' => 0];
-        }
 
         $this->journalisation->info(sprintf('[Data16] %d lieux trouvés.', count($features)));
 
@@ -73,21 +55,55 @@ class ImportationLieuxService
 
         $this->gestionnaireEntites->flush();
 
-        $bilan = [
-            'creations'  => $creations,
-            'misesAJour' => $misesAJour,
-            'erreurs'    => $erreurs,
-            'total'      => $creations + $misesAJour,
-        ];
-
+        $bilan = ['creations' => $creations, 'misesAJour' => $misesAJour, 'erreurs' => $erreurs, 'total' => $creations + $misesAJour];
         $this->journalisation->info('[Data16] Import terminé.', $bilan);
 
         return $bilan;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * @return bool true = création, false = mise à jour
+     * Crée en base les catégories trouvées dans l'API si elles n'existent pas.
+     * On fait d'abord un appel API pour récupérer toutes les valeurs distinctes
+     * de Type_de_patrimoine_culturel, puis on les insère en un seul flush.
      */
+    private function initialiserCategories(): void
+    {
+        $this->journalisation->info('[Data16] Initialisation des catégories...');
+
+        $reponse  = $this->clientHttp->request('GET', self::URL_DATASET);
+        $features = $reponse->toArray()['features'] ?? [];
+
+        // Collecte des valeurs distinctes depuis l'API
+        $nomsDistincts = [];
+        foreach ($features as $feature) {
+            $nom = $feature['properties']['Type_de_patrimoine_culturel'] ?? null;
+            if ($nom !== null && !in_array($nom, $nomsDistincts, true)) {
+                $nomsDistincts[] = $nom;
+            }
+        }
+
+        $nouvelles = 0;
+        foreach ($nomsDistincts as $nom) {
+            if ($this->depotCategorie->findOneBy(['nom' => $nom]) === null) {
+                $categorie = new Categorie();
+                $categorie->setNom($nom);
+                $this->gestionnaireEntites->persist($categorie);
+                $nouvelles++;
+                $this->journalisation->info("[Data16] Catégorie créée : {$nom}");
+            }
+        }
+
+        if ($nouvelles > 0) {
+            $this->gestionnaireEntites->flush();
+        }
+
+        $this->journalisation->info("[Data16] {$nouvelles} catégorie(s) insérée(s).");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function traiterUnFeature(array $feature): bool
     {
         $p = $feature['properties'] ?? [];
@@ -108,21 +124,20 @@ class ImportationLieuxService
         $lieu->setNom(mb_substr($nom, 0, 255));
         $lieu->setLatitude(isset($p['Latitude'])  ? (float) $p['Latitude']  : null);
         $lieu->setLongitude(isset($p['Longitude']) ? (float) $p['Longitude'] : null);
-        // Stockage direct de la valeur API — ex: "Musée", "Monument", "Parc"
-        $lieu->setCategorie($p['Type_de_patrimoine_culturel'] ?? null);
+
+        // Liaison vers l'entité Categorie
+        $nomCategorie = $p['Type_de_patrimoine_culturel'] ?? null;
+        $categorie    = $nomCategorie
+            ? $this->depotCategorie->findOneBy(['nom' => $nomCategorie])
+            : null;
+        $lieu->setCategorie($categorie);
 
         // ── DetailLieu ────────────────────────────────────────────────────
         $detail = $lieu->getDetail() ?? new DetailLieu();
 
-        $detail->setDescription(
-            mb_substr((string) ($p['Descriptif_court'] ?? $p['Descriptif_détaillé'] ?? ''), 0, 255)
-        );
-        $detail->setHoraires(
-            mb_substr((string) ($p['Période_en_clair'] ?? 'Non renseignés'), 0, 255)
-        );
-        $detail->setAccessibilite(
-            mb_substr((string) ($p['Marque_Tourisme_et_Handicap'] ?? 'Non renseignée'), 0, 255)
-        );
+        $detail->setDescription(mb_substr((string) ($p['Descriptif_court'] ?? $p['Descriptif_détaillé'] ?? ''), 0, 255));
+        $detail->setHoraires(mb_substr((string) ($p['Période_en_clair'] ?? 'Non renseignés'), 0, 255));
+        $detail->setAccessibilite(mb_substr((string) ($p['Marque_Tourisme_et_Handicap'] ?? 'Non renseignée'), 0, 255));
         $detail->setTarif(0);
         $detail->setPhotos($this->extraireUrlSiteWeb($p['Moyens_de_communication'] ?? null));
 
@@ -135,10 +150,8 @@ class ImportationLieuxService
         return $estNouveau;
     }
 
-    /**
-     * Extrait l'URL du site web depuis le champ "Moyens_de_communication".
-     * Format : "Téléphone : ...|Site web (URL) : https://exemple.fr|..."
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function extraireUrlSiteWeb(?string $moyensCommunication): ?string
     {
         if ($moyensCommunication === null) {
