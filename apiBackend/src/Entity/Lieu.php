@@ -2,10 +2,23 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use App\Dto\LieuListeDto;
 use App\Repository\LieuRepository;
+use App\State\LieuListeProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LieuRepository::class)]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            output:   LieuListeDto::class,
+            provider: LieuListeProvider::class,
+        ),
+    ],
+    paginationItemsPerPage: 20,
+)]
 class Lieu
 {
     #[ORM\Id]
@@ -28,11 +41,6 @@ class Lieu
     #[ORM\Column(nullable: true)]
     private ?float $longitude = null;
 
-    /**
-     * Catégorie du lieu — valeur directement issue de l'API Data16.
-     * Exemples : "Musée", "Monument", "Parc", "Site"...
-     * Utilisé pour le filtrage côté Android.
-     */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $categorie = null;
 
