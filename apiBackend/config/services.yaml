@@ -9,42 +9,6 @@
 parameters:
 
 services:
-    password_hashers:
-        App\Entity\Utilisateur:
-            algorithm: bcrypt #hash les mot de passe
-
-    providers:
-        app_user_provider:
-            entity:
-                class: App\Entity\Utilisateur
-                property: mail          # champ utilisé comme identifiant (username)
-
-    firewalls:
-        dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
-
-        # Pare-feu de login : accepte les requêtes JSON POST sur /api/login_check
-        login:
-            pattern:   ^/api/login_check
-            stateless: true
-            json_login:
-                check_path:          /api/login_check
-                username_path:       username       # clé JSON envoyée par Android
-                password_path:       password       # clé JSON envoyée par Android
-                success_handler:     lexik_jwt_authentication.handler.authentication_success
-                failure_handler:     lexik_jwt_authentication.handler.authentication_failure
-
-        # Pare-feu API : toutes les routes /api/* nécessitent un JWT valide
-        api:
-            pattern:   ^/api
-            stateless: true
-            jwt: ~
-
-    access_control:
-        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
-        - { path: ^/api,             roles: IS_AUTHENTICATED_FULLY }
-
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
