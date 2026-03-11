@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import androidx.activity.EdgeToEdge;
 
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
