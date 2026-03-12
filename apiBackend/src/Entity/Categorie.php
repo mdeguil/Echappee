@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\CategorieRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
@@ -13,39 +15,25 @@ class Categorie
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 100, unique: true)]
     private ?string $nom = null;
 
-    #[ORM\ManyToOne(inversedBy: 'categorie')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Lieu $lieux = null;
+    /**
+     * @var Collection<int, Lieu>
+     */
+    #[ORM\OneToMany(targetEntity: Lieu::class, mappedBy: 'categorie')]
+    private Collection $lieux;
 
-    public function getId(): ?int
+    public function __construct()
     {
-        return $this->id;
+        $this->lieux = new ArrayCollection();
     }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
+    public function getId(): ?int { return $this->id; }
 
-    public function setNom(string $nom): static
-    {
-        $this->nom = $nom;
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
 
-        return $this;
-    }
-
-    public function getLieux(): ?Lieu
-    {
-        return $this->lieux;
-    }
-
-    public function setLieux(?Lieu $lieux): static
-    {
-        $this->lieux = $lieux;
-
-        return $this;
-    }
+    /** @return Collection<int, Lieu> */
+    public function getLieux(): Collection { return $this->lieux; }
 }
