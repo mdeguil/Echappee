@@ -1,4 +1,4 @@
-package com.example.application;
+package fr.app.application;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import androidx.activity.EdgeToEdge;
+
 
 public class MainActivity extends AppCompatActivity {
 
