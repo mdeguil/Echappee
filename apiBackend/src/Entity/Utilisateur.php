@@ -20,9 +20,6 @@ class Utilisateur
     private ?string $mdp = null;
 
     #[ORM\ManyToOne(inversedBy: 'utilisateur')]
-    private ?ListeUtilisateur $listeUtilisateur = null;
-
-    #[ORM\ManyToOne(inversedBy: 'utilisateur')]
     private ?Commentaire $commentaires = null;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
@@ -54,18 +51,6 @@ class Utilisateur
     public function setMdp(string $mdp): static
     {
         $this->mdp = $mdp;
-
-        return $this;
-    }
-
-    public function getListeUtilisateur(): ?ListeUtilisateur
-    {
-        return $this->listeUtilisateur;
-    }
-
-    public function setListeUtilisateur(?ListeUtilisateur $listeUtilisateur): static
-    {
-        $this->listeUtilisateur = $listeUtilisateur;
 
         return $this;
     }

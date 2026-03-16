@@ -1,4 +1,4 @@
-package fr.app.application;
+package fr.app.application.view;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +20,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
+
+import fr.app.application.R;
 
 public class ConnexionActivity extends AppCompatActivity {
 

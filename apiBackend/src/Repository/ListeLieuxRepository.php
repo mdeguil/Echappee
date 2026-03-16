@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\ListeLieu;
+use App\Entity\ListeLieux;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<ListeLieu>
+ * @extends ServiceEntityRepository<ListeLieux>
  */
-class ListeLieuRepository extends ServiceEntityRepository
+class ListeLieuxRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ListeLieu::class);
+        parent::__construct($registry, ListeLieux::class);
     }
 
     //    /**
-    //     * @return ListeLieu[] Returns an array of ListeLieu objects
+    //     * @return ListeLieux[] Returns an array of ListeLieux objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ListeLieuRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?ListeLieu
+    //    public function findOneBySomeField($value): ?ListeLieux
     //    {
     //        return $this->createQueryBuilder('l')
     //            ->andWhere('l.exampleField = :val')
