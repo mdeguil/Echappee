@@ -57,9 +57,6 @@ class Lieu
 
     // ── Relations ──────────────────────────────────────────────────────────
 
-    #[ORM\ManyToOne(inversedBy: 'lieu')]
-    private ?ListeLieu $listeLieu = null;
-
     #[ORM\OneToOne(inversedBy: 'lieu', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?DetailLieu $detail = null;
@@ -86,9 +83,6 @@ class Lieu
 
     public function getCategorie(): ?Categorie { return $this->categorie; }
     public function setCategorie(?Categorie $categorie): static { $this->categorie = $categorie; return $this; }
-
-    public function getListeLieu(): ?ListeLieu { return $this->listeLieu; }
-    public function setListeLieu(?ListeLieu $listeLieu): static { $this->listeLieu = $listeLieu; return $this; }
 
     public function getDetail(): ?DetailLieu { return $this->detail; }
     public function setDetail(DetailLieu $detail): static { $this->detail = $detail; return $this; }

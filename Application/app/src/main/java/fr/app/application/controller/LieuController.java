@@ -21,7 +21,7 @@ public class LieuController {
     // À remplacer par votre IP locale (ex: 192.168.1.X) si test sur téléphone physique
     // ou "10.0.2.2" si émulateur Android Studio
     private static final String URL_BASE    = "http://172.20.10.2:8000";
-    private static final String URL_LIEUX   = URL_BASE + "/api/lieux";
+    private static final String URL_LIEUX   = URL_BASE + "/api/lieus";
 
     private final Context contexte;
     private final Gson    gson;

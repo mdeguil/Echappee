@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ItiniraireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ItiniraireRepository::class)]
@@ -16,11 +18,16 @@ class Itiniraire
     #[ORM\Column]
     private ?int $dureTotal = null;
 
-    #[ORM\ManyToOne(inversedBy: 'itineraire')]
-    private ?ListeLieu $listeLieu = null;
+    /**
+     * @var Collection<int, ListeLieux>
+     */
+    #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire')]
+    private Collection $listeLieux;
 
-    #[ORM\ManyToOne(inversedBy: 'itineraire')]
-    private ?ListeUtilisateur $listeUtilisateur = null;
+    public function __construct()
+    {
+        $this->listeLieux = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -39,26 +46,32 @@ class Itiniraire
         return $this;
     }
 
-    public function getListeLieu(): ?ListeLieu
+    /**
+     * @return Collection<int, ListeLieux>
+     */
+    public function getListeLieux(): Collection
     {
-        return $this->listeLieu;
+        return $this->listeLieux;
     }
 
-    public function setListeLieu(?ListeLieu $listeLieu): static
+    public function addListeLieux(ListeLieux $listeLieux): static
     {
-        $this->listeLieu = $listeLieu;
+        if (!$this->listeLieux->contains($listeLieux)) {
+            $this->listeLieux->add($listeLieux);
+            $listeLieux->setIdItiniraire($this);
+        }
 
         return $this;
     }
 
-    public function getListeUtilisateur(): ?ListeUtilisateur
+    public function removeListeLieux(ListeLieux $listeLieux): static
     {
-        return $this->listeUtilisateur;
-    }
-
-    public function setListeUtilisateur(?ListeUtilisateur $listeUtilisateur): static
-    {
-        $this->listeUtilisateur = $listeUtilisateur;
+        if ($this->listeLieux->removeElement($listeLieux)) {
+            // set the owning side to null (unless already changed)
+            if ($listeLieux->getIdItiniraire() === $this) {
+                $listeLieux->setIdItiniraire(null);
+            }
+        }
 
         return $this;
     }
