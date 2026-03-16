@@ -1,36 +1,50 @@
 security:
     password_hashers:
-        App\Entity\Utilisateur:
-            algorithm: bcrypt #hash les mot de passe
+        App\Entity\User:
+            algorithm: auto
+
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
+        #ROLE_SUPER_ADMIN: ROLE_ADMIN
 
     providers:
         app_user_provider:
             entity:
-                class: App\Entity\Utilisateur
-                property: mail          # champ utilisé comme identifiant (username)
+                class: App\Entity\User
+                property: email
 
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # Pare-feu de login : accepte les requêtes JSON POST sur /api/login_check
         login:
-            pattern:   ^/api/login_check
+            pattern: ^/api/login
             stateless: true
             json_login:
-                check_path:          /api/login_check
-                username_path:       username       # clé JSON envoyée par Android
-                password_path:       password       # clé JSON envoyée par Android
-                success_handler:     lexik_jwt_authentication.handler.authentication_success
-                failure_handler:     lexik_jwt_authentication.handler.authentication_failure
+                check_path: /api/login_check
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        # Pare-feu API : toutes les routes /api/* nécessitent un JWT valide
         api:
-            pattern:   ^/api
+            pattern: ^/api
             stateless: true
             jwt: ~
 
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+            logout:
+                path: app_logout
+
     access_control:
-        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
-        - { path: ^/api,             roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api, roles: ROLE_ADMIN }
