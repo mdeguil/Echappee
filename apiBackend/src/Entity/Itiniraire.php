@@ -24,9 +24,16 @@ class Itiniraire
     #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire')]
     private Collection $listeLieux;
 
+    /**
+     * @var Collection<int, ListeUtilisateur>
+     */
+    #[ORM\OneToMany(targetEntity: ListeUtilisateur::class, mappedBy: 'idItiniraire')]
+    private Collection $listeUtilisateurs;
+
     public function __construct()
     {
         $this->listeLieux = new ArrayCollection();
+        $this->listeUtilisateurs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -70,6 +77,36 @@ class Itiniraire
             // set the owning side to null (unless already changed)
             if ($listeLieux->getIdItiniraire() === $this) {
                 $listeLieux->setIdItiniraire(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ListeUtilisateur>
+     */
+    public function getListeUtilisateurs(): Collection
+    {
+        return $this->listeUtilisateurs;
+    }
+
+    public function addListeUtilisateur(ListeUtilisateur $listeUtilisateur): static
+    {
+        if (!$this->listeUtilisateurs->contains($listeUtilisateur)) {
+            $this->listeUtilisateurs->add($listeUtilisateur);
+            $listeUtilisateur->setIdItiniraire($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListeUtilisateur(ListeUtilisateur $listeUtilisateur): static
+    {
+        if ($this->listeUtilisateurs->removeElement($listeUtilisateur)) {
+            // set the owning side to null (unless already changed)
+            if ($listeUtilisateur->getIdItiniraire() === $this) {
+                $listeUtilisateur->setIdItiniraire(null);
             }
         }
 
