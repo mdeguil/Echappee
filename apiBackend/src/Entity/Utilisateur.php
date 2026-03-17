@@ -4,78 +4,111 @@ namespace App\Entity;
 
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
-class Utilisateur
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $mail = null;
+    #[ORM\Column(length: 180)]
+    private ?string $email = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $mdp = null;
+    /**
+     * @var list<string> The user roles
+     */
+    #[ORM\Column]
+    private array $roles = [];
 
-    #[ORM\ManyToOne(inversedBy: 'utilisateur')]
-    private ?Commentaire $commentaires = null;
-
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?PointSante $sante = null;
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    private ?string $password = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getMail(): ?string
+    public function getEmail(): ?string
     {
-        return $this->mail;
+        return $this->email;
     }
 
-    public function setMail(string $mail): static
+    public function setEmail(string $email): static
     {
-        $this->mail = $mail;
+        $this->email = $email;
 
         return $this;
     }
 
-    public function getMdp(): ?string
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
     {
-        return $this->mdp;
+        return (string) $this->email;
     }
 
-    public function setMdp(string $mdp): static
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
     {
-        $this->mdp = $mdp;
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
 
         return $this;
     }
 
-    public function getCommentaires(): ?Commentaire
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): ?string
     {
-        return $this->commentaires;
+        return $this->password;
     }
 
-    public function setCommentaires(?Commentaire $commentaires): static
+    public function setPassword(string $password): static
     {
-        $this->commentaires = $commentaires;
+        $this->password = $password;
 
         return $this;
     }
 
-    public function getSante(): ?PointSante
+    /**
+     * Ensure the session doesn't contain actual password hashes by CRC32C-hashing them, as supported since Symfony 7.3.
+     */
+    public function __serialize(): array
     {
-        return $this->sante;
+        $data = (array) $this;
+        $data["\0".self::class."\0password"] = hash('crc32c', $this->password);
+
+        return $data;
     }
 
-    public function setSante(PointSante $sante): static
+    #[\Deprecated]
+    public function eraseCredentials(): void
     {
-        $this->sante = $sante;
-
-        return $this;
+        // @deprecated, to be removed when upgrading to Symfony 8
     }
 }
