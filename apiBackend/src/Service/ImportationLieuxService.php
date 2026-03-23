@@ -125,6 +125,9 @@ class ImportationLieuxService
         $lieu->setLatitude(isset($p['Latitude'])  ? (float) $p['Latitude']  : null);
         $lieu->setLongitude(isset($p['Longitude']) ? (float) $p['Longitude'] : null);
 
+        // Photo toujours null à l'import (sera renseignée manuellement)
+        $lieu->setPhoto(null);
+
         // Liaison vers l'entité Categorie
         $nomCategorie = $p['Type_de_patrimoine_culturel'] ?? null;
         $categorie    = $nomCategorie
@@ -139,7 +142,8 @@ class ImportationLieuxService
         $detail->setHoraires(mb_substr((string) ($p['Période_en_clair'] ?? 'Non renseignés'), 0, 255));
         $detail->setAccessibilite(mb_substr((string) ($p['Marque_Tourisme_et_Handicap'] ?? 'Non renseignée'), 0, 255));
         $detail->setTarif(0);
-        $detail->setPhotos($this->extraireUrlSiteWeb($p['Moyens_de_communication'] ?? null));
+        // Photos toujours null à l'import (sera renseignée manuellement)
+        $detail->setPhotos(null);
 
         $detail->setLieu($lieu);
         $lieu->setDetail($detail);

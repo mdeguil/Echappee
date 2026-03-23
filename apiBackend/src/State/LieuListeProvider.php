@@ -8,6 +8,8 @@ use App\Dto\LieuListeDto;
 use App\Repository\LieuRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+// php bin/console app:importer-lieux
+
 final class LieuListeProvider implements ProviderInterface
 {
     public function __construct(
