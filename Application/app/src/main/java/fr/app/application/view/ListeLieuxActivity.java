@@ -68,7 +68,6 @@ public class ListeLieuxActivity extends AppCompatActivity {
     }
 
     private void onLieuClique(Lieu lieu) {
-        // TODO : naviguer vers le détail du lieu
-        Toast.makeText(this, "Lieu sélectionné : " + lieu.getNom(), Toast.LENGTH_SHORT).show();
+        startActivity(DetailLieuActivity.creerIntent(this, lieu));
     }
 }
