@@ -80,6 +80,6 @@ public class LieuController {
                 erreur -> callback.onErreur("Erreur réseau : " + erreur.getMessage())
         );
 
-        VolleyUtils.getInstance(contexte).getFileRequetes().add(requete);
+        VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
 }
