@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Fragment Google Maps — occupe tout l'écran -->
+    <fragment
+        android:id="@+id/fragmentCarte"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Bouton retour en haut à gauche -->
+    <ImageButton
+        android:id="@+id/boutonRetour"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
+        android:background="@android:color/white"
+        android:src="@android:drawable/ic_menu_revert"
+        android:contentDescription="Retour"
+        android:elevation="4dp" />
+
+    <!-- Barre de chargement -->
+    <ProgressBar
+        android:id="@+id/barreChargement"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone" />
+
+</RelativeLayout>
