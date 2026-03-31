@@ -40,12 +40,6 @@ public class ConnexionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connexion);
 
-        // Si déjà connecté, rediriger vers MainActivity
-        if (isLoggedIn()) {
-            navigateToMain();
-            return;
-        }
-
         initViews();
         setupListeners();
     }
