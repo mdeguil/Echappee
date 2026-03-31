@@ -32,6 +32,7 @@ public class ConnexionActivity extends AppCompatActivity {
     private TextInputLayout tilEmail, tilPassword;
     private TextInputEditText etEmail, etPassword;
     private MaterialButton btnLogin;
+    private MaterialButton btnRegister;
     private ProgressBar progressBar;
     private TextView tvError;
 
@@ -50,6 +51,7 @@ public class ConnexionActivity extends AppCompatActivity {
         etEmail     = findViewById(R.id.etEmail);
         etPassword  = findViewById(R.id.etPassword);
         btnLogin    = findViewById(R.id.btnLogin);
+        btnRegister = findViewById(R.id.btnRegistration);
         progressBar = findViewById(R.id.progressBar);
         tvError     = findViewById(R.id.tvError);
     }
@@ -62,6 +64,11 @@ public class ConnexionActivity extends AppCompatActivity {
             if (validateInputs(email, mdp)) {
                 login(email, mdp);
             }
+        });
+
+        btnRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), InscriptionActivity.class);
+            startActivity(intent);
         });
     }
 
