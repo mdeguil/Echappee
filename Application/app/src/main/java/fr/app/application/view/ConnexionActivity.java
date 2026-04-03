@@ -26,12 +26,12 @@ import fr.app.application.R;
 public class ConnexionActivity extends AppCompatActivity {
 
     // ⚠️ Remplacez par l'URL de votre API Symfony
-    private static final String API_BASE_URL = "http://10.0.2.2:8000"; // localhost depuis l'émulateur
+    private static final String API_BASE_URL = "http://172.20.10.2:8000";
     private static final String LOGIN_ENDPOINT = "/api/login_check";
 
     private TextInputLayout tilEmail, tilPassword;
     private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin;
+    private MaterialButton btnLogin, btnRegister;
     private ProgressBar progressBar;
     private TextView tvError;
 
@@ -39,12 +39,6 @@ public class ConnexionActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connexion);
-
-        // Si déjà connecté, rediriger vers MainActivity
-        if (isLoggedIn()) {
-            navigateToMain();
-            return;
-        }
 
         initViews();
         setupListeners();
@@ -56,6 +50,7 @@ public class ConnexionActivity extends AppCompatActivity {
         etEmail     = findViewById(R.id.etEmail);
         etPassword  = findViewById(R.id.etPassword);
         btnLogin    = findViewById(R.id.btnLogin);
+        btnRegister = findViewById(R.id.btnRegistration);
         progressBar = findViewById(R.id.progressBar);
         tvError     = findViewById(R.id.tvError);
     }
@@ -68,6 +63,11 @@ public class ConnexionActivity extends AppCompatActivity {
             if (validateInputs(email, mdp)) {
                 login(email, mdp);
             }
+        });
+
+        btnRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(v.getContext(), InscriptionActivity.class);
+            startActivity(intent);
         });
     }
 
@@ -163,12 +163,26 @@ public class ConnexionActivity extends AppCompatActivity {
     private void handleLoginResponse(int code, String result, String errorMsg) {
         if (code == HttpURLConnection.HTTP_OK && result != null) {
             try {
-                JSONObject json = new JSONObject(result);
-                String token = json.getString("token");
-                saveToken(token);
-                navigateToMain();
+                // Nettoyage de la chaîne au cas où il y aurait des caractères parasites
+                String cleanResult = result.trim();
+                JSONObject json = new JSONObject(cleanResult);
+
+                if (json.has("token")) {
+                    String token = json.getString("token");
+
+                    // Vérification que le token n'est pas juste le mot "string" de test
+                    if (token.equals("string")) {
+                        android.util.Log.w("AUTH", "Attention : Le serveur a renvoyé un token de test 'string'");
+                    }
+
+                    saveToken(token);
+                    navigateToMain();
+                } else {
+                    showError("Clé 'token' absente de la réponse");
+                }
             } catch (Exception e) {
-                showError("Réponse inattendue du serveur");
+                android.util.Log.e("JSON_PARSE_ERROR", "Erreur sur : " + result);
+                showError("Erreur de format JSON : " + e.getMessage());
             }
         } else if (code == 401) {
             showError("Email ou mot de passe incorrect");
@@ -192,7 +206,7 @@ public class ConnexionActivity extends AppCompatActivity {
     }
 
     private void navigateToMain() {
-        startActivity(new Intent(this, MainActivity.class));
+        startActivity(new Intent(this, ListeLieuxActivity.class));
         finish();
     }
 

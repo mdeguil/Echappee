@@ -9,6 +9,7 @@ use App\Repository\LieuRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 // php bin/console app:importer-lieux
+// php -S 0.0.0.0:8000 -t public
 
 final class LieuListeProvider implements ProviderInterface
 {
