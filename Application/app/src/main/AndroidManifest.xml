@@ -34,12 +34,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".view.ListeLieuxActivity"
-            android:exported="false" />
-        <activity
-            android:name=".view.CarteLieuxActivity"
-            android:exported="false" />
+        <activity android:name=".view.DetailLieuActivity"
+            android:exported="true">
+        </activity>
     </application>
 
 </manifest>

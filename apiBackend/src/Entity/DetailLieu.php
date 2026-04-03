@@ -2,10 +2,24 @@
 
 namespace App\Entity;
 
-use App\Repository\DetailLieuRepository;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use App\State\DetailLieuListeProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DetailLieuRepository::class)]
+#[ApiResource(
+    operations: [
+        new Get(
+            uriTemplate: '/detail_lieus/{id}',
+            provider: DetailLieuListeProvider::class,
+        ),
+    ],
+    paginationItemsPerPage: 20,
+)]
 class DetailLieu
 {
     #[ORM\Id]
