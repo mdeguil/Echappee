@@ -31,8 +31,7 @@ public class ConnexionActivity extends AppCompatActivity {
 
     private TextInputLayout tilEmail, tilPassword;
     private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin;
-    private MaterialButton btnRegister;
+    private MaterialButton btnLogin, btnRegister;
     private ProgressBar progressBar;
     private TextView tvError;
 
