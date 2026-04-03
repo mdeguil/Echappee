@@ -2,11 +2,19 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\Post;
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use ApiPlatform\Metadata\ApiResource;
 
+#[ApiResource(
+    operations: [
+        new Post(processor: \App\State\UserPasswordHasher::class),
+    ],
+    formats: ['json', 'jsonld']
+)]
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
@@ -23,7 +31,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
      * @var list<string> The user roles
      */
     #[ORM\Column]
-    private array $roles = [];
+    private array $roles = ["ROLE_USER"];
 
     /**
      * @var string The hashed password
