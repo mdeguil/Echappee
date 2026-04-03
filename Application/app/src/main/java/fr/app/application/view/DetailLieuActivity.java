@@ -177,11 +177,12 @@ public class DetailLieuActivity extends AppCompatActivity {
         afficherSection(sectionHoraires, tvHoraires, detail.getHoraires());
 
         // Tarif (Integer → "X €", masqué si null)
-        if (detail.getFarif() != null) {
-            tvTarifs.setText(detail.getFarif() + " €");
+        if (detail.getTarif() != 0) {
+            tvTarifs.setText(detail.getTarif() + " €");
             sectionTarifs.setVisibility(View.VISIBLE);
         } else {
-            sectionTarifs.setVisibility(View.GONE);
+            tvTarifs.setText("Gratuit");
+            sectionTarifs.setVisibility(View.VISIBLE);
         }
 
         // Accessibilité

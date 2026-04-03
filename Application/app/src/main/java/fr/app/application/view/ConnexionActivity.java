@@ -119,7 +119,7 @@ public class ConnexionActivity extends AppCompatActivity {
                 // Corps JSON : {"username": "...", "password": "..."}
                 // Symfony LexikJWT attend "username" par défaut (= votre champ mail)
                 JSONObject body = new JSONObject();
-                body.put("username", email);
+                body.put("email", email);
                 body.put("password", mdp);
 
                 OutputStream os = conn.getOutputStream();

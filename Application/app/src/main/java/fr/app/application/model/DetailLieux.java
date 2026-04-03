@@ -26,7 +26,7 @@ public class DetailLieux {
     public int getId()            { return id; }
     public String getDescription()        { return description; }
     public String getHoraires()      { return horaires; }
-    public Integer getFarif() { return tarif; }
+    public Integer getTarif() { return tarif; }
     public String getAccessibilite()   { return accessibilite; }
     public String getPhotos()  { return photos; }
 }
