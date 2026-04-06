@@ -23,7 +23,7 @@ import fr.app.application.utils.VolleyUtils;
 public class DetailLieuController {
 
     // Même base URL que LieuController
-    private static final String URL_BASE  = "http://10.241.249.102:8000";
+    private static final String URL_BASE  = "http://192.168.0.137:8000";
     private static final String URL_DETAILLIEUX = URL_BASE + "/api/detail_lieus/";
 
     private final Context contexte;
@@ -66,7 +66,7 @@ public class DetailLieuController {
                 erreur -> callback.onErreur("Erreur réseau : " + erreur.getMessage())
         );
 
-        VolleyUtils.getInstance(contexte).getFileRequetes().add(requete);
+        VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
 
 }

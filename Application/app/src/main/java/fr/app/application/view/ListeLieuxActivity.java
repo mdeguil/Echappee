@@ -40,7 +40,7 @@ import java.util.Map;
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     // ─── Constantes ──────────────────────────────────────────────────────────
-    private static final String URL_API        = "http://172.20.10.2:8000/api/lieus";
+    private static final String URL_API        = "http://192.168.0.137:8000/api/lieus";
     private static final int    CODE_PERMISSION = 1001;
     private static final LatLng CENTRE_CHARENTE = new LatLng(45.6466, 0.1560);
     private static final float  ZOOM_INITIAL    = 9f;

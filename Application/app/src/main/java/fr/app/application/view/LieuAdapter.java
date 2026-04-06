@@ -1,9 +1,11 @@
 package fr.app.application.view;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,7 +21,7 @@ import fr.app.application.model.Lieu;
 
 /**
  * Adapter RecyclerView pour afficher la liste des lieux touristiques.
- * Chaque item affiche : photo, nom, catégorie et note moyenne.
+ * Chaque item affiche : photo, nom, catégorie, note moyenne et un bouton "Détails".
  */
 public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder> {
 
@@ -74,8 +76,15 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
             titulaire.photoLieu.setImageResource(android.R.drawable.ic_menu_gallery);
         }
 
-        // Clic sur l'item
+        // Clic sur l'item → centrer la carte (comportement existant)
         titulaire.itemView.setOnClickListener(v -> ecouteurClic.onClic(lieu));
+
+        // Clic sur le bouton "Détails" → ouvrir DetailLieuActivity
+        titulaire.btnDetails.setOnClickListener(v -> {
+            Intent intent = new Intent(contexte, DetailLieuActivity.class);
+            intent.putExtra(DetailLieuActivity.EXTRA_ID,        lieu.getId());
+            contexte.startActivity(intent);
+        });
     }
 
     @Override
@@ -96,6 +105,7 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
         TextView  nomLieu;
         TextView  categorieLabel;
         TextView  noteMoyenne;
+        Button    btnDetails;
 
         LieuViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -103,6 +113,7 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
             nomLieu        = itemView.findViewById(R.id.textNomLieu);
             categorieLabel = itemView.findViewById(R.id.textCategorie);
             noteMoyenne    = itemView.findViewById(R.id.textNoteMoyenne);
+            btnDetails     = itemView.findViewById(R.id.btnDetails);
         }
     }
 }

@@ -26,7 +26,7 @@ import fr.app.application.R;
 public class ConnexionActivity extends AppCompatActivity {
 
     // ⚠️ Remplacez par l'URL de votre API Symfony
-    private static final String API_BASE_URL = "http://172.20.10.2:8000";
+    private static final String API_BASE_URL = "http://192.168.0.137:8000";
     private static final String LOGIN_ENDPOINT = "/api/login_check";
 
     private TextInputLayout tilEmail, tilPassword;
