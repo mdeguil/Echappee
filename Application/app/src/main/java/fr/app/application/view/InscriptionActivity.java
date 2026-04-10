@@ -21,7 +21,7 @@ import org.json.JSONObject;
 
 public class InscriptionActivity extends AppCompatActivity {
 
-    private static final String URL_INSCRIPTION = "http://172.20.10.2:8000/api/utilisateurs";
+    private static final String URL_INSCRIPTION = "http://192.168.0.70:8000/api/utilisateurs";
 
     // ─── Vues ────────────────────────────────────────────────────────────────
     private TextInputLayout   tilEmail, tilMotDePasse, tilConfirmationMotDePasse;

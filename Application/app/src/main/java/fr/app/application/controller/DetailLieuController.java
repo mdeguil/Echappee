@@ -23,7 +23,7 @@ import fr.app.application.utils.VolleyUtils;
 public class DetailLieuController {
 
     // Même base URL que LieuController
-    private static final String URL_BASE  = "http://192.168.0.137:8000";
+    private static final String URL_BASE  = "http://192.168.0.70:8000";
     private static final String URL_DETAILLIEUX = URL_BASE + "/api/detail_lieus/";
 
     private final Context contexte;
