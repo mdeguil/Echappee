@@ -15,10 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
-import fr.app.application.R;
-import fr.app.application.model.Lieu;
-import fr.app.application.model.ReponseLieux;
-import fr.app.application.utils.VolleyUtils;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -37,24 +33,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.app.application.R;
+import fr.app.application.model.Lieu;
+import fr.app.application.model.ReponseLieux;
+import fr.app.application.utils.ApiConfig;
+import fr.app.application.utils.VolleyUtils;
+
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    // ─── Constantes ──────────────────────────────────────────────────────────
-    private static final String URL_API        = "http://192.168.0.70:8000/api/lieus";
-    private static final int    CODE_PERMISSION = 1001;
-    private static final LatLng CENTRE_CHARENTE = new LatLng(45.6466, 0.1560);
-    private static final float  ZOOM_INITIAL    = 9f;
+    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
+    private static final String ENDPOINT_LIEUX  = "/api/lieus";
+    private static final int    CODE_PERMISSION  = 1001;
+    private static final LatLng CENTRE_CHARENTE  = new LatLng(45.6466, 0.1560);
+    private static final float  ZOOM_INITIAL     = 9f;
 
-    // ─── Attributs ───────────────────────────────────────────────────────────
-    private GoogleMap     carteMaps;
-    private LieuAdapter   adaptateur;
-    private ProgressBar   barreChargement;
-    private List<Lieu>    listeLieux = new ArrayList<>();
+    private GoogleMap   carteMaps;
+    private LieuAdapter adaptateur;
+    private ProgressBar barreChargement;
+    private List<Lieu>  listeLieux = new ArrayList<>();
 
-    // Associe chaque lieu à son marqueur sur la carte
     private Map<Integer, Marker> marqueurParId = new HashMap<>();
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,17 +61,12 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         barreChargement = findViewById(R.id.barreChargement);
 
-        // ── RecyclerView ──
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
 
-        adaptateur = new LieuAdapter(this, listeLieux, lieu -> {
-            // Clic sur un lieu → centrer la carte sur son marqueur
-            centrerCarteOnLieu(lieu);
-        });
+        adaptateur = new LieuAdapter(this, listeLieux, lieu -> centrerCarteOnLieu(lieu));
         recyclerLieux.setAdapter(adaptateur);
 
-        // ── Google Maps ──
         SupportMapFragment fragmentCarte = (SupportMapFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragmentCarte);
         if (fragmentCarte != null) {
@@ -81,19 +74,14 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
-    // ─── Callback Maps ───────────────────────────────────────────────────────
-
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         carteMaps = googleMap;
 
         carteMaps.getUiSettings().setZoomControlsEnabled(true);
         carteMaps.getUiSettings().setCompassEnabled(true);
-
-        // Position par défaut sur la Charente
         carteMaps.moveCamera(CameraUpdateFactory.newLatLngZoom(CENTRE_CHARENTE, ZOOM_INITIAL));
 
-        // Clic sur un marqueur → faire défiler la liste jusqu'au lieu correspondant
         carteMaps.setOnMarkerClickListener(marqueur -> {
             Integer idLieu = (Integer) marqueur.getTag();
             if (idLieu != null) {
@@ -105,11 +93,10 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         activerPositionUtilisateur();
 
-        // Charger les lieux une fois la carte prête
-        chargerLieux(URL_API);
+        // L'URL est construite depuis le singleton au moment de l'appel
+        String url = ApiConfig.getInstance(this).getUrl(ENDPOINT_LIEUX);
+        chargerLieux(url);
     }
-
-    // ─── Chargement API ──────────────────────────────────────────────────────
 
     private void chargerLieux(String url) {
         barreChargement.setVisibility(View.VISIBLE);
@@ -120,7 +107,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
                 null,
                 reponse -> {
                     try {
-                        // Parsing avec Gson
                         Gson gson = new Gson();
                         ReponseLieux reponseLieux = gson.fromJson(
                                 reponse.toString(), ReponseLieux.class);
@@ -133,6 +119,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
                             }
                             adaptateur.notifyDataSetChanged();
                         }
+                        barreChargement.setVisibility(View.GONE);
 
                     } catch (Exception e) {
                         barreChargement.setVisibility(View.GONE);
@@ -152,8 +139,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         VolleyUtils.getInstance(this).addToRequestQueue(requete);
     }
 
-    // ─── Marqueurs ────────────────────────────────────────────────────────────
-
     private void ajouterMarqueurSurCarte(Lieu lieu) {
         if (carteMaps == null) return;
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
@@ -168,7 +153,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
                         obtenirCouleurCategorie(lieu.getCategorie()))));
 
         if (marqueur != null) {
-            // Stocke l'id du lieu dans le tag du marqueur
             marqueur.setTag(lieu.getId());
             marqueurParId.put(lieu.getId(), marqueur);
         }
@@ -177,26 +161,15 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private float obtenirCouleurCategorie(String categorie) {
         if (categorie == null) return BitmapDescriptorFactory.HUE_RED;
         switch (categorie) {
-            case "Musée":
-                return BitmapDescriptorFactory.HUE_BLUE;
-            case "Site et monument historique":
-                return BitmapDescriptorFactory.HUE_ORANGE;
-            case "Parc et jardin":
-                return BitmapDescriptorFactory.HUE_GREEN;
-            case "Entreprise à visiter":
-                return BitmapDescriptorFactory.HUE_YELLOW;
-            case "Centre d'interprétation":
-                return BitmapDescriptorFactory.HUE_VIOLET;
-            default:
-                return BitmapDescriptorFactory.HUE_RED;
+            case "Musée":                       return BitmapDescriptorFactory.HUE_BLUE;
+            case "Site et monument historique": return BitmapDescriptorFactory.HUE_ORANGE;
+            case "Parc et jardin":              return BitmapDescriptorFactory.HUE_GREEN;
+            case "Entreprise à visiter":        return BitmapDescriptorFactory.HUE_YELLOW;
+            case "Centre d'interprétation":     return BitmapDescriptorFactory.HUE_VIOLET;
+            default:                            return BitmapDescriptorFactory.HUE_RED;
         }
     }
 
-    // ─── Synchronisation carte ↔ liste ───────────────────────────────────────
-
-    /**
-     * Clic sur un lieu dans la liste → centrer la carte sur son marqueur
-     */
     private void centrerCarteOnLieu(Lieu lieu) {
         if (carteMaps == null) return;
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
@@ -204,16 +177,10 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         LatLng position = new LatLng(lieu.getLatitude(), lieu.getLongitude());
         carteMaps.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 14f));
 
-        // Afficher l'info-bulle du marqueur correspondant
         Marker marqueur = marqueurParId.get(lieu.getId());
-        if (marqueur != null) {
-            marqueur.showInfoWindow();
-        }
+        if (marqueur != null) marqueur.showInfoWindow();
     }
 
-    /**
-     * Clic sur un marqueur → faire défiler la RecyclerView jusqu'au lieu
-     */
     private void faireDefilerListeVers(int idLieu) {
         for (int i = 0; i < listeLieux.size(); i++) {
             if (listeLieux.get(i).getId() == idLieu) {
@@ -223,30 +190,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
             }
         }
     }
-
-    /**
-     * Ajuste le zoom pour englober tous les marqueurs
-     */
-    private void ajusterCameraAuxMarqueurs() {
-        if (carteMaps == null || listeLieux.isEmpty()) return;
-
-        LatLngBounds.Builder constructeur = new LatLngBounds.Builder();
-        boolean aucunPoint = true;
-
-        for (Lieu lieu : listeLieux) {
-            if (lieu.getLatitude() != null && lieu.getLongitude() != null) {
-                constructeur.include(new LatLng(lieu.getLatitude(), lieu.getLongitude()));
-                aucunPoint = false;
-            }
-        }
-
-        if (!aucunPoint) {
-            carteMaps.animateCamera(
-                    CameraUpdateFactory.newLatLngBounds(constructeur.build(), 80));
-        }
-    }
-
-    // ─── Permission GPS ──────────────────────────────────────────────────────
 
     private void activerPositionUtilisateur() {
         if (ActivityCompat.checkSelfPermission(this,

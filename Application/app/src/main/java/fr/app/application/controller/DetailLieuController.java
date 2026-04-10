@@ -1,7 +1,5 @@
 package fr.app.application.controller;
 
-import static android.content.ContentValues.TAG;
-
 import android.content.Context;
 import android.util.Log;
 
@@ -10,21 +8,21 @@ import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
 
 import fr.app.application.model.DetailLieux;
-import fr.app.application.model.ReponseDetailLieux;
+import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
 /**
  * Controller qui récupère le détail d'un lieu depuis l'API.
  *
- * Endpoint attendu : GET /api/detail_lieus/{id}
- * Réponse attendue : { "data": { "id": 1, "description": "...", "horaires": "...",
- *                                "tarif": 12, "accessibilite": "...", "photos": "url" } }
+ * Endpoint : GET /api/detail_lieus/{id}
+ *
+ * L'URL de base est lue depuis ApiConfig (singleton) — plus besoin
+ * de toucher ce fichier pour changer l'adresse du serveur.
  */
 public class DetailLieuController {
 
-    // Même base URL que LieuController
-    private static final String URL_BASE  = "http://192.168.0.70:8000";
-    private static final String URL_DETAILLIEUX = URL_BASE + "/api/detail_lieus/";
+    private static final String TAG = "DetailLieuController";
+    private static final String ENDPOINT_DETAIL = "/api/detail_lieus/";
 
     private final Context contexte;
     private final Gson    gson;
@@ -46,7 +44,8 @@ public class DetailLieuController {
      * @param callback résultat ou erreur
      */
     public void recupererDetail(int id, CallbackDetail callback) {
-        String url = URL_DETAILLIEUX + id;
+        // L'URL de base est toujours lue depuis le singleton
+        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_DETAIL) + id;
 
         StringRequest requete = new StringRequest(
                 Request.Method.GET,
@@ -60,6 +59,7 @@ public class DetailLieuController {
                             callback.onErreur("Détail introuvable pour l'id " + id);
                         }
                     } catch (Exception e) {
+                        Log.e(TAG, "Erreur de parsing", e);
                         callback.onErreur("Erreur de parsing : " + e.getMessage());
                     }
                 },
@@ -68,5 +68,4 @@ public class DetailLieuController {
 
         VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
-
 }

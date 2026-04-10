@@ -10,18 +10,19 @@ import java.util.List;
 
 import fr.app.application.model.Lieu;
 import fr.app.application.model.ReponseLieux;
+import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
 /**
  * Controller qui gère les appels à l'API pour récupérer les lieux.
  * Utilise Volley pour le réseau et Gson pour le parsing JSON.
+ *
+ * L'URL de base est lue depuis ApiConfig (singleton) — plus besoin
+ * de toucher ce fichier pour changer l'adresse du serveur.
  */
 public class LieuController {
 
-    // À remplacer par votre IP locale (ex: 192.168.1.X) si test sur téléphone physique
-    // ou "10.0.2.2" si émulateur Android Studio
-    private static final String URL_BASE    = "http://192.168.0.137:8000";
-    private static final String URL_LIEUX   = URL_BASE + "/api/lieus";
+    private static final String ENDPOINT_LIEUX = "/api/lieus";
 
     private final Context contexte;
     private final Gson    gson;
@@ -50,7 +51,10 @@ public class LieuController {
      * @param recherche  ex: "château" (null pour ignorer le filtre)
      */
     public void recupererLieuxAvecFiltres(String categorie, String recherche, CallbackLieux callback) {
-        StringBuilder urlBuilder = new StringBuilder(URL_LIEUX);
+        // L'URL de base est toujours lue depuis le singleton
+        String urlBase = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_LIEUX);
+
+        StringBuilder urlBuilder = new StringBuilder(urlBase);
         boolean premierParametre = true;
 
         if (categorie != null && !categorie.isEmpty()) {
@@ -68,7 +72,6 @@ public class LieuController {
                 Request.Method.GET,
                 url,
                 reponse -> {
-                    // Parsing Gson de la réponse { "data": [...] }
                     ReponseLieux reponseLieux = gson.fromJson(reponse, ReponseLieux.class);
 
                     if (reponseLieux != null && reponseLieux.getData() != null) {

@@ -22,18 +22,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import fr.app.application.R;
+import fr.app.application.utils.ApiConfig;
 
 public class ConnexionActivity extends AppCompatActivity {
 
-    // ⚠️ Remplacez par l'URL de votre API Symfony
-    private static final String API_BASE_URL = "http://192.168.0.70:8000";
+    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
     private static final String LOGIN_ENDPOINT = "/api/login_check";
 
-    private TextInputLayout tilEmail, tilPassword;
-    private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin, btnRegister;
-    private ProgressBar progressBar;
-    private TextView tvError;
+    private TextInputLayout    tilEmail, tilPassword;
+    private TextInputEditText  etEmail, etPassword;
+    private MaterialButton     btnLogin, btnRegister;
+    private ProgressBar        progressBar;
+    private TextView           tvError;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,13 +101,16 @@ public class ConnexionActivity extends AppCompatActivity {
     private void login(String email, String mdp) {
         setLoading(true);
 
+        // L'URL de base est lue depuis le singleton au moment de l'appel
+        String loginUrl = ApiConfig.getInstance(this).getUrl(LOGIN_ENDPOINT);
+
         new Thread(() -> {
-            String result = null;
-            String errorMsg = null;
-            int responseCode = 0;
+            String result     = null;
+            String errorMsg   = null;
+            int    responseCode = 0;
 
             try {
-                URL url = new URL(API_BASE_URL + LOGIN_ENDPOINT);
+                URL url = new URL(loginUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
@@ -116,8 +119,6 @@ public class ConnexionActivity extends AppCompatActivity {
                 conn.setConnectTimeout(10000);
                 conn.setReadTimeout(10000);
 
-                // Corps JSON : {"username": "...", "password": "..."}
-                // Symfony LexikJWT attend "username" par défaut (= votre champ mail)
                 JSONObject body = new JSONObject();
                 body.put("email", email);
                 body.put("password", mdp);
@@ -148,9 +149,9 @@ public class ConnexionActivity extends AppCompatActivity {
                 errorMsg = "Erreur réseau : " + e.getMessage();
             }
 
-            final String finalResult   = result;
-            final String finalError    = errorMsg;
-            final int    finalCode     = responseCode;
+            final String finalResult = result;
+            final String finalError  = errorMsg;
+            final int    finalCode   = responseCode;
 
             runOnUiThread(() -> {
                 setLoading(false);
@@ -163,18 +164,11 @@ public class ConnexionActivity extends AppCompatActivity {
     private void handleLoginResponse(int code, String result, String errorMsg) {
         if (code == HttpURLConnection.HTTP_OK && result != null) {
             try {
-                // Nettoyage de la chaîne au cas où il y aurait des caractères parasites
                 String cleanResult = result.trim();
                 JSONObject json = new JSONObject(cleanResult);
 
                 if (json.has("token")) {
                     String token = json.getString("token");
-
-                    // Vérification que le token n'est pas juste le mot "string" de test
-                    if (token.equals("string")) {
-                        android.util.Log.w("AUTH", "Attention : Le serveur a renvoyé un token de test 'string'");
-                    }
-
                     saveToken(token);
                     navigateToMain();
                 } else {
@@ -197,12 +191,6 @@ public class ConnexionActivity extends AppCompatActivity {
     private void saveToken(String token) {
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
         prefs.edit().putString("jwt_token", token).apply();
-    }
-
-    /** Vérifie si un token est déjà stocké */
-    private boolean isLoggedIn() {
-        SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
-        return prefs.getString("jwt_token", null) != null;
     }
 
     private void navigateToMain() {

@@ -11,24 +11,25 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import fr.app.application.R;
+import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class InscriptionActivity extends AppCompatActivity {
 
-    private static final String URL_INSCRIPTION = "http://192.168.0.70:8000/api/utilisateurs";
+    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
+    private static final String ENDPOINT_INSCRIPTION = "/api/utilisateurs";
 
     // ─── Vues ────────────────────────────────────────────────────────────────
     private TextInputLayout   tilEmail, tilMotDePasse, tilConfirmationMotDePasse;
     private TextInputEditText etEmail, etMotDePasse, etConfirmationMotDePasse;
-    private TextView           tvErreur;
-    private ProgressBar        barreChargement;
-    private MaterialButton     btnInscription, btnRetourConnexion;
+    private TextView          tvErreur;
+    private ProgressBar       barreChargement;
+    private MaterialButton    btnInscription, btnRetourConnexion;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -44,18 +45,18 @@ public class InscriptionActivity extends AppCompatActivity {
     // ─── Initialisation ──────────────────────────────────────────────────────
 
     private void initialiserVues() {
-        tilEmail                 = findViewById(R.id.tilEmail);
-        tilMotDePasse            = findViewById(R.id.tilMotDePasse);
-        tilConfirmationMotDePasse= findViewById(R.id.tilConfirmationMotDePasse);
+        tilEmail                  = findViewById(R.id.tilEmail);
+        tilMotDePasse             = findViewById(R.id.tilMotDePasse);
+        tilConfirmationMotDePasse = findViewById(R.id.tilConfirmationMotDePasse);
 
-        etEmail                  = findViewById(R.id.etEmail);
-        etMotDePasse             = findViewById(R.id.etMotDePasse);
-        etConfirmationMotDePasse = findViewById(R.id.etConfirmationMotDePasse);
+        etEmail                   = findViewById(R.id.etEmail);
+        etMotDePasse              = findViewById(R.id.etMotDePasse);
+        etConfirmationMotDePasse  = findViewById(R.id.etConfirmationMotDePasse);
 
-        tvErreur                 = findViewById(R.id.tvErreur);
-        barreChargement          = findViewById(R.id.barreChargement);
-        btnInscription           = findViewById(R.id.btnInscription);
-        btnRetourConnexion       = findViewById(R.id.btnRetourConnexion);
+        tvErreur                  = findViewById(R.id.tvErreur);
+        barreChargement           = findViewById(R.id.barreChargement);
+        btnInscription            = findViewById(R.id.btnInscription);
+        btnRetourConnexion        = findViewById(R.id.btnRetourConnexion);
     }
 
     private void configurerBoutons() {
@@ -71,7 +72,6 @@ public class InscriptionActivity extends AppCompatActivity {
 
     private boolean validerFormulaire(String email, String motDePasse,
                                       String confirmation) {
-        // Réinitialiser les erreurs
         tilEmail.setError(null);
         tilMotDePasse.setError(null);
         tilConfirmationMotDePasse.setError(null);
@@ -116,16 +116,18 @@ public class InscriptionActivity extends AppCompatActivity {
 
         try {
             JSONObject corps = new JSONObject();
-            corps.put("email",       email);
-            corps.put("password",    motDePasse);
+            corps.put("email",    email);
+            corps.put("password", motDePasse);
+
+            // L'URL est construite depuis le singleton au moment de l'appel
+            String url = ApiConfig.getInstance(this).getUrl(ENDPOINT_INSCRIPTION);
 
             JsonObjectRequest requete = new JsonObjectRequest(
                     Request.Method.POST,
-                    URL_INSCRIPTION,
+                    url,
                     corps,
                     reponse -> {
                         afficherChargement(false);
-                        // Inscription réussie → retour à la connexion
                         startActivity(new Intent(this, ConnexionActivity.class));
                         finish();
                     },
@@ -142,7 +144,7 @@ public class InscriptionActivity extends AppCompatActivity {
 
             requete.setRetryPolicy(new com.android.volley.DefaultRetryPolicy(
                     10000,
-                    0,    
+                    0,
                     com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
             ));
 
