@@ -30,6 +30,10 @@
             android:value="AIzaSyAFFP_NkxnYZQ4rHVD0-nPq_iin_xodeXY" />
 
         <activity
+            android:name=".view.ItineraireActivity"
+            android:exported="false"/>
+
+        <activity
             android:name=".view.ConnexionActivity"
             android:exported="true">
             <intent-filter>

@@ -1,6 +1,8 @@
 package fr.app.application.view;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
@@ -24,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.button.MaterialButton;
 import com.google.gson.Gson;
 
 import org.json.JSONObject;
@@ -52,6 +55,8 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private ProgressBar barreChargement;
     private List<Lieu>  listeLieux = new ArrayList<>();
 
+    private MaterialButton btnCreerItineraire, btnVoirItineraires;
+
     private Map<Integer, Marker> marqueurParId = new HashMap<>();
 
     @Override
@@ -60,6 +65,21 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         setContentView(R.layout.activity_liste_lieux);
 
         barreChargement = findViewById(R.id.barreChargement);
+
+        //btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
+        btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
+
+        /**
+        btnCreerItineraire.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ItineraireActivity.class);
+            startActivity(intent);
+        });
+         **/
+
+        btnVoirItineraires.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ItineraireActivity.class);
+            startActivity(intent);
+        });
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));

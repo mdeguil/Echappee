@@ -5,9 +5,21 @@ namespace App\Entity;
 use App\Repository\ItiniraireRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use App\State\ItiniraireProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ItiniraireRepository::class)]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            provider: ItiniraireProvider::class,
+        ),
+        new Post() // Permet de créer un itinéraire depuis Android
+    ]
+)]
 class Itiniraire
 {
     #[ORM\Id]
