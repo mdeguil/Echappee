@@ -1,13 +1,13 @@
 package fr.app.application.view;
 
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar; // Import important
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,14 +18,10 @@ import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.model.Itineraire;
 
-/**
- * Affiche la liste de tous les itinéraires disponibles.
- * Lancée depuis ListeLieuxActivity via le bouton "Voir itinéraire".
- */
 public class ItineraireActivity extends AppCompatActivity {
 
     private ProgressBar          barreChargement;
-    private TextView             tvAucunItineraire;
+    private View                 layoutAucunItineraire; // Changé pour le conteneur
     private RecyclerView         recyclerItineraires;
     private ItineraireAdapter    adaptateur;
     private ItineraireController controleur;
@@ -37,11 +33,18 @@ public class ItineraireActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_itineraire);
 
-        // Bouton retour dans la toolbar
+        // Configuration de la Toolbar personnalisée
+        Toolbar toolbar = findViewById(R.id.toolbarItineraires);
+        setSupportActionBar(toolbar);
+
+        // Bouton retour
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Itinéraires");
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+
+        // Gestion du clic sur le bouton retour de la toolbar
+        toolbar.setNavigationOnClickListener(v -> finish());
 
         initVues();
         chargerItineraires();
@@ -49,10 +52,12 @@ public class ItineraireActivity extends AppCompatActivity {
 
     private void initVues() {
         barreChargement   = findViewById(R.id.barreChargementItineraire);
-        tvAucunItineraire = findViewById(R.id.tvAucunItineraire);
+        layoutAucunItineraire = findViewById(R.id.layoutAucunItineraire); // Correspond au XML amélioré
         recyclerItineraires = findViewById(R.id.recyclerItineraires);
 
         recyclerItineraires.setLayoutManager(new LinearLayoutManager(this));
+
+        // On passe la liste des itinéraires à l'adaptateur
         adaptateur = new ItineraireAdapter(this, listeItineraires);
         recyclerItineraires.setAdapter(adaptateur);
 
@@ -61,7 +66,7 @@ public class ItineraireActivity extends AppCompatActivity {
 
     private void chargerItineraires() {
         barreChargement.setVisibility(View.VISIBLE);
-        tvAucunItineraire.setVisibility(View.GONE);
+        layoutAucunItineraire.setVisibility(View.GONE);
 
         controleur.recupererItineraires(new ItineraireController.CallbackItineraires() {
             @Override
@@ -73,7 +78,7 @@ public class ItineraireActivity extends AppCompatActivity {
                 adaptateur.notifyDataSetChanged();
 
                 if (listeItineraires.isEmpty()) {
-                    tvAucunItineraire.setVisibility(View.VISIBLE);
+                    layoutAucunItineraire.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -81,18 +86,9 @@ public class ItineraireActivity extends AppCompatActivity {
             public void onErreur(String messageErreur) {
                 barreChargement.setVisibility(View.GONE);
                 Toast.makeText(ItineraireActivity.this,
-                        "Erreur : " + messageErreur,
+                        "Erreur réseau : " + messageErreur,
                         Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 }

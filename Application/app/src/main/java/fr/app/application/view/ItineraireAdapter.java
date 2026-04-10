@@ -39,14 +39,15 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Itineraire itineraire = itineraires.get(position);
 
-        // Numéro et durée
+        // Titre de l'itinéraire
         holder.tvTitre.setText("Itinéraire #" + itineraire.getId());
 
+        // Gestion de la durée (inchangé, votre logique est bonne)
         if (itineraire.getDureTotal() != null) {
             int heures  = itineraire.getDureTotal() / 60;
             int minutes = itineraire.getDureTotal() % 60;
             if (heures > 0) {
-                holder.tvDuree.setText("Durée : " + heures + "h" + (minutes > 0 ? minutes + "min" : ""));
+                holder.tvDuree.setText("Durée : " + heures + "h" + (minutes > 0 ? String.format("%02d", minutes) : ""));
             } else {
                 holder.tvDuree.setText("Durée : " + minutes + " min");
             }
@@ -54,23 +55,25 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
             holder.tvDuree.setText("Durée non définie");
         }
 
-        // Nombre de lieux
-        int nbLieux = itineraire.getListeLieux() != null ? itineraire.getListeLieux().size() : 0;
+        // --- CORRECTION DU NOMBRE DE LIEUX ---
+        // On utilise la liste simplifiée "lieux" du nouveau modèle
+        int nbLieux = (itineraire.getLieux() != null) ? itineraire.getLieux().size() : 0;
         holder.tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
 
-        // Noms des lieux sous forme de liste
-        if (itineraire.getListeLieux() != null && !itineraire.getListeLieux().isEmpty()) {
+        // --- CORRECTION DE LA LISTE DES NOMS ---
+        if (itineraire.getLieux() != null && !itineraire.getLieux().isEmpty()) {
             StringBuilder sb = new StringBuilder();
-            for (Itineraire.ListeLieuItineraire ll : itineraire.getListeLieux()) {
-                if (ll.getIdLieu() != null) {
+            for (Itineraire.LieuRef lieu : itineraire.getLieux()) {
+                if (lieu.getNom() != null) {
                     if (sb.length() > 0) sb.append(" → ");
-                    sb.append(ll.getIdLieu().getNom());
+                    sb.append(lieu.getNom());
                 }
             }
             holder.tvLieux.setText(sb.toString());
             holder.tvLieux.setVisibility(View.VISIBLE);
         } else {
-            holder.tvLieux.setVisibility(View.GONE);
+            holder.tvLieux.setText("Aucun lieu associé"); // Plus sympa pour l'utilisateur
+            holder.tvLieux.setVisibility(View.VISIBLE);
         }
     }
 
