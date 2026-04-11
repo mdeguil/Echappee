@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Dto\ItineraireOutput;
 use App\Repository\ItiniraireRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -9,6 +10,8 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\State\ItiniraireProvider;
+use App\Dto\ItineraireInput;
+use App\State\ItineraireProcessor;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ItiniraireRepository::class)]
@@ -17,7 +20,11 @@ use Doctrine\ORM\Mapping as ORM;
         new GetCollection(
             provider: ItiniraireProvider::class,
         ),
-        new Post() // Permet de créer un itinéraire depuis Android
+        new Post(
+            input:     ItineraireInput::class,
+            output:    ItineraireOutput::class,
+            processor: ItineraireProcessor::class,
+        )
     ]
 )]
 class Itiniraire
@@ -33,7 +40,7 @@ class Itiniraire
     /**
      * @var Collection<int, ListeLieux>
      */
-    #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire')]
+    #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire', cascade: ['persist'])]
     private Collection $listeLieux;
 
     /**
