@@ -2,7 +2,7 @@
 
 namespace App\Dto;
 
-final class LieuListeDto
+final class LieuListe
 {
     public function __construct(
         public readonly int     $id,

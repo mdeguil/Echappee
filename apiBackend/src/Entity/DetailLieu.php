@@ -2,12 +2,9 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use App\State\DetailLieuListeProvider;
+use ApiPlatform\Metadata\Get;
+use App\State\Provider\DetailLieuListeProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DetailLieuRepository::class)]

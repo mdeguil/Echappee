@@ -1,6 +1,6 @@
 <?php
 
-namespace App\State;
+namespace App\State\Provider;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
@@ -18,7 +18,6 @@ final class ItiniraireProvider implements ProviderInterface
         $itineraires = $this->itiniraireRepo->findAll();
 
         $donnees = array_map(function($iti) {
-            // On transforme la collection de ListeLieux en un tableau simple de lieux
             $lieuxDetails = [];
             foreach ($iti->getListeLieux() as $relation) {
                 $lieu = $relation->getIdLieu();

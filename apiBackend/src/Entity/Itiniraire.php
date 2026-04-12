@@ -2,16 +2,16 @@
 
 namespace App\Entity;
 
-use App\Dto\ItineraireOutput;
-use App\Repository\ItiniraireRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
-use App\State\ItiniraireProvider;
 use App\Dto\ItineraireInput;
-use App\State\ItineraireProcessor;
+use App\Dto\ItineraireOutput;
+use App\Repository\ItiniraireRepository;
+use App\State\Processor\ItineraireProcessor;
+use App\State\Provider\ItiniraireProvider;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ItiniraireRepository::class)]

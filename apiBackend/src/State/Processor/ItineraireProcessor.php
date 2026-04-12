@@ -1,9 +1,8 @@
 <?php
-namespace App\State;
+namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
-use App\Dto\ItineraireInput;
 use App\Dto\ItineraireOutput;
 use App\Dto\ListeLieuxOutput;
 use App\Entity\Itiniraire;
