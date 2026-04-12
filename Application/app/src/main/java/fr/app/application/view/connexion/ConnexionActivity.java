@@ -28,7 +28,6 @@ import fr.app.application.view.lieux.ListeLieuxActivity;
 
 public class ConnexionActivity extends AppCompatActivity {
 
-    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
     private static final String LOGIN_ENDPOINT = "/api/login_check";
 
     private TextInputLayout    tilEmail, tilPassword;
@@ -73,7 +72,13 @@ public class ConnexionActivity extends AppCompatActivity {
         });
     }
 
-    /** Validation locale avant envoi */
+    /**
+     * Valide la conformité des saisies utilisateur avant l'envoi à l'API.
+     *
+     * @param email L'adresse email saisie.
+     * @param mdp   Le mot de passe saisi.
+     * @return true si toutes les conditions de validation sont remplies.
+     */
     private boolean validateInputs(String email, String mdp) {
         boolean valid = true;
         tilEmail.setError(null);
@@ -99,7 +104,12 @@ public class ConnexionActivity extends AppCompatActivity {
         return valid;
     }
 
-    /** Appel API Symfony /api/login_check (LexikJWT) */
+    /**
+     * Exécute la requête d'authentification vers l'API.
+     *
+     * @param email L'identifiant utilisateur.
+     * @param mdp   Le mot de passe associé.
+     */
     private void login(String email, String mdp) {
         setLoading(true);
 
@@ -163,6 +173,16 @@ public class ConnexionActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * Analyse la réponse HTTP retournée par le serveur.
+     * * En cas de code 200 (OK), extrait le jeton JWT du JSON.
+     * Gère les erreurs spécifiques comme le code 401 (identifiants invalides)
+     * ou les erreurs de formatage JSON.
+     *
+     * @param code     Le code de réponse HTTP.
+     * @param result   Le corps de la réponse en cas de succès.
+     * @param errorMsg Le message d'erreur en cas d'échec technique.
+     */
     private void handleLoginResponse(int code, String result, String errorMsg) {
         if (code == HttpURLConnection.HTTP_OK && result != null) {
             try {
@@ -189,7 +209,13 @@ public class ConnexionActivity extends AppCompatActivity {
         }
     }
 
-    /** Sauvegarde le JWT dans SharedPreferences */
+    /**
+     * Enregistre le jeton de sécurité de manière persistante.
+     * * Utilise les SharedPreferences pour conserver le jeton JWT, permettant
+     * ainsi d'authentifier les requêtes ultérieures vers l'API.
+     *
+     * @param token Le jeton JWT fourni par le serveur.
+     */
     private void saveToken(String token) {
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
         prefs.edit().putString("jwt_token", token).apply();
@@ -205,6 +231,11 @@ public class ConnexionActivity extends AppCompatActivity {
         tvError.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Gère l'état visuel des composants pendant le chargement.
+     *
+     * @param loading true pour afficher l'état de chargement.
+     */
     private void setLoading(boolean loading) {
         btnLogin.setEnabled(!loading);
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);

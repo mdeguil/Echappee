@@ -20,10 +20,6 @@ import fr.app.application.R;
 import fr.app.application.model.Lieu;
 import fr.app.application.view.detailsLieux.DetailLieuActivity;
 
-/**
- * Adapter RecyclerView pour afficher la liste des lieux touristiques.
- * Chaque item affiche : photo, nom, catégorie, note moyenne et un bouton "Détails".
- */
 public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder> {
 
     private final Context contexte;
@@ -51,13 +47,10 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
     public void onBindViewHolder(@NonNull LieuViewHolder titulaire, int position) {
         Lieu lieu = listeLieux.get(position);
 
-        // Nom du lieu
         titulaire.nomLieu.setText(lieu.getNom());
 
-        // Catégorie
         titulaire.categorieLabel.setText(lieu.getCategorie() != null ? lieu.getCategorie() : "Non classé");
 
-        // Note moyenne
         if (lieu.getNoteMoyen() != null) {
             titulaire.noteMoyenne.setText(lieu.getNoteMoyen() + " / 5");
             titulaire.noteMoyenne.setVisibility(View.VISIBLE);
@@ -65,7 +58,6 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
             titulaire.noteMoyenne.setVisibility(View.GONE);
         }
 
-        // Photo avec Glide (placeholder si pas de photo)
         if (lieu.getPhoto() != null && !lieu.getPhoto().isEmpty()) {
             Glide.with(contexte)
                     .load(lieu.getPhoto())
@@ -77,10 +69,8 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
             titulaire.photoLieu.setImageResource(android.R.drawable.ic_menu_gallery);
         }
 
-        // Clic sur l'item → centrer la carte (comportement existant)
         titulaire.itemView.setOnClickListener(v -> ecouteurClic.onClic(lieu));
 
-        // Clic sur le bouton "Détails" → ouvrir DetailLieuActivity
         titulaire.btnDetails.setOnClickListener(v -> {
             Intent intent = new Intent(contexte, DetailLieuActivity.class);
             intent.putExtra(DetailLieuActivity.EXTRA_ID,        lieu.getId());
@@ -91,16 +81,10 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
     @Override
     public int getItemCount() { return listeLieux != null ? listeLieux.size() : 0; }
 
-    /**
-     * Met à jour la liste et rafraîchit l'affichage.
-     */
     public void mettreAJourListe(List<Lieu> nouveauxLieux) {
         this.listeLieux = nouveauxLieux;
         notifyDataSetChanged();
     }
-
-    // ── ViewHolder ────────────────────────────────────────────────────────
-
     static class LieuViewHolder extends RecyclerView.ViewHolder {
         ImageView photoLieu;
         TextView  nomLieu;

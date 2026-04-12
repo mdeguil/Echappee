@@ -11,14 +11,6 @@ import fr.app.application.model.DetailLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
-/**
- * Controller qui récupère le détail d'un lieu depuis l'API.
- *
- * Endpoint : GET /api/detail_lieus/{id}
- *
- * L'URL de base est lue depuis ApiConfig (singleton) — plus besoin
- * de toucher ce fichier pour changer l'adresse du serveur.
- */
 public class DetailLieuController {
 
     private static final String TAG = "DetailLieuController";
@@ -27,6 +19,9 @@ public class DetailLieuController {
     private final Context contexte;
     private final Gson    gson;
 
+    /**
+     * Interface de rappel pour la réception des données détaillées d'un lieu.
+     */
     public interface CallbackDetail {
         void onSucces(DetailLieux detail);
         void onErreur(String messageErreur);
@@ -38,10 +33,10 @@ public class DetailLieuController {
     }
 
     /**
-     * Récupère les détails d'un lieu par son identifiant.
+     * Récupère les détails spécifiques d'un lieu via une requête GET.
      *
-     * @param id       identifiant du lieu (provient de Lieu.getId())
-     * @param callback résultat ou erreur
+     * @param id       L'identifiant unique du détail à récupérer (lié à l'entité Lieu).
+     * @param callback L'interface de rappel pour traiter le résultat ou l'erreur.
      */
     public void recupererDetail(int id, CallbackDetail callback) {
         // L'URL de base est toujours lue depuis le singleton

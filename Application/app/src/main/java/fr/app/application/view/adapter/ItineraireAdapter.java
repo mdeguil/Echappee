@@ -14,9 +14,6 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.model.Itineraire;
 
-/**
- * Adapter pour afficher la liste des itinéraires dans un RecyclerView.
- */
 public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.ViewHolder> {
 
     private final Context           contexte;
@@ -39,10 +36,8 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Itineraire itineraire = itineraires.get(position);
 
-        // Titre de l'itinéraire
         holder.tvTitre.setText("Itinéraire #" + itineraire.getId());
 
-        // Gestion de la durée (inchangé, votre logique est bonne)
         if (itineraire.getDureTotal() != null) {
             int heures  = itineraire.getDureTotal() / 60;
             int minutes = itineraire.getDureTotal() % 60;
@@ -55,12 +50,9 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
             holder.tvDuree.setText("Durée non définie");
         }
 
-        // --- CORRECTION DU NOMBRE DE LIEUX ---
-        // On utilise la liste simplifiée "lieux" du nouveau modèle
         int nbLieux = (itineraire.getLieux() != null) ? itineraire.getLieux().size() : 0;
         holder.tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
 
-        // --- CORRECTION DE LA LISTE DES NOMS ---
         if (itineraire.getLieux() != null && !itineraire.getLieux().isEmpty()) {
             StringBuilder sb = new StringBuilder();
             for (Itineraire.LieuRef lieu : itineraire.getLieux()) {
@@ -72,7 +64,7 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
             holder.tvLieux.setText(sb.toString());
             holder.tvLieux.setVisibility(View.VISIBLE);
         } else {
-            holder.tvLieux.setText("Aucun lieu associé"); // Plus sympa pour l'utilisateur
+            holder.tvLieux.setText("Aucun lieu associé");
             holder.tvLieux.setVisibility(View.VISIBLE);
         }
     }

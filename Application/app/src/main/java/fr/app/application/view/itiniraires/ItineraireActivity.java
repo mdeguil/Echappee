@@ -57,7 +57,6 @@ public class ItineraireActivity extends AppCompatActivity {
 
         recyclerItineraires.setLayoutManager(new LinearLayoutManager(this));
 
-        // On passe la liste des itinéraires à l'adaptateur
         adaptateur = new ItineraireAdapter(this, listeItineraires);
         recyclerItineraires.setAdapter(adaptateur);
 

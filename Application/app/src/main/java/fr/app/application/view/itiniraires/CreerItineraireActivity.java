@@ -36,12 +36,6 @@ import fr.app.application.controller.LieuController;
 import fr.app.application.model.Lieu;
 import fr.app.application.view.adapter.LieuSelectionneAdapter;
 
-/**
- * Permet à l'utilisateur de créer un itinéraire en :
- *   1. Tapant sur des marqueurs sur la carte pour sélectionner les lieux
- *   2. La durée est calculée automatiquement (30 min par lieu)
- *   3. Appuyant sur "Créer l'itinéraire" pour envoyer le POST
- */
 public class CreerItineraireActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     // Durée estimée par lieu en minutes
@@ -49,22 +43,16 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     private static final int    CODE_PERMISSION  = 1002;
     private static final LatLng CENTRE_CHARENTE  = new LatLng(45.6466, 0.1560);
     private static final float  ZOOM_INITIAL     = 9f;
-
-    // ── Vues ─────────────────────────────────────────────────────────────
     private GoogleMap            carteMaps;
     private ProgressBar          barreChargement;
     private TextView             tvDureeCalculee;
     private TextView             tvAucunLieu;
     private RecyclerView         recyclerLieuxSelectionnes;
     private MaterialButton       btnCreer;
-
-    // ── Données ──────────────────────────────────────────────────────────
     private final List<Lieu>           tousLesLieux         = new ArrayList<>();
     private final List<Lieu>           lieuxSelectionnes    = new ArrayList<>();
     private final Map<Integer, Marker> marqueurParId        = new HashMap<>();
     private final Map<Integer, Boolean>lieuxSelectionnesMap = new HashMap<>();
-
-    // ── Adapters & controllers ────────────────────────────────────────────
     private LieuSelectionneAdapter adaptateur;
     private LieuController          lieuController;
     private ItineraireController    itineraireController;
@@ -85,8 +73,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         lieuController       = new LieuController(this);
         itineraireController = new ItineraireController(this);
     }
-
-    // ── Initialisation ────────────────────────────────────────────────────
 
     private void initVues() {
         barreChargement          = findViewById(R.id.barreChargementCreer);
@@ -112,16 +98,16 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    // ── Carte ─────────────────────────────────────────────────────────────
-
+    /**
+     * Initialise la carte et configure l'écouteur de clic sur les marqueurs.
+     * * Chaque clic sur un marqueur déclenche la méthode {@link #basculerSelectionLieu}.
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         carteMaps = googleMap;
         carteMaps.getUiSettings().setZoomControlsEnabled(true);
         carteMaps.getUiSettings().setCompassEnabled(true);
         carteMaps.moveCamera(CameraUpdateFactory.newLatLngZoom(CENTRE_CHARENTE, ZOOM_INITIAL));
-
-        // Clic sur un marqueur → sélectionner/désélectionner le lieu
         carteMaps.setOnMarkerClickListener(marqueur -> {
             Integer idLieu = (Integer) marqueur.getTag();
             if (idLieu != null) {
@@ -169,7 +155,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                 .position(position)
                 .title(lieu.getNom())
                 .snippet("Appuyer pour sélectionner")
-                // Marqueur gris par défaut = non sélectionné
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
         if (marqueur != null) {
@@ -178,23 +163,24 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    // ── Sélection des lieux ───────────────────────────────────────────────
-
+    /**
+     * Gère l'ajout ou le retrait d'un lieu dans l'itinéraire en cours de création.
+     *
+     * @param idLieu   L'identifiant du lieu cliqué.
+     * @param marqueur La référence visuelle du marqueur sur la carte.
+     */
     private void basculerSelectionLieu(int idLieu, Marker marqueur) {
         boolean estSelectionne = Boolean.TRUE.equals(lieuxSelectionnesMap.get(idLieu));
 
         if (estSelectionne) {
-            // Désélectionner
             retirerLieuParId(idLieu);
             marqueur.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
             marqueur.setSnippet("Appuyer pour sélectionner");
         } else {
-            // Sélectionner
             Lieu lieu = trouverLieuParId(idLieu);
             if (lieu != null) {
                 lieuxSelectionnes.add(lieu);
                 lieuxSelectionnesMap.put(idLieu, true);
-                // Marqueur vert = sélectionné
                 marqueur.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
                 marqueur.setSnippet("✓ Sélectionné - position " + lieuxSelectionnes.size());
                 marqueur.showInfoWindow();
@@ -207,9 +193,13 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         mettreAJourMessageVide();
     }
 
+    /**
+     * Supprime un lieu de la sélection actuelle.
+     *
+     * @param lieu L'objet Lieu à retirer.
+     */
     private void retirerLieu(Lieu lieu) {
         retirerLieuParId(lieu.getId());
-        // Remettre le marqueur en gris
         Marker marqueur = marqueurParId.get(lieu.getId());
         if (marqueur != null) {
             marqueur.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
@@ -233,8 +223,11 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         return null;
     }
 
-    // ── Durée & UI ────────────────────────────────────────────────────────
-
+    /**
+     * Calcule et affiche la durée estimée du parcours en fonction du nombre
+     * de lieux sélectionnés (basé sur une constante de temps par site).
+     * * Formate le texte pour afficher des heures ou uniquement des minutes.
+     */
     private void mettreAJourDuree() {
         int dureeMinutes = lieuxSelectionnes.size() * DUREE_PAR_LIEU;
         int heures  = dureeMinutes / 60;
@@ -260,8 +253,9 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         recyclerLieuxSelectionnes.setVisibility(lieuxSelectionnes.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
-    // ── Création de l'itinéraire ──────────────────────────────────────────
-
+    /**
+     * Compile les données de l'itinéraire
+     */
     private void creerItineraire() {
         if (lieuxSelectionnes.isEmpty()) return;
 
@@ -296,8 +290,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                     }
                 });
     }
-
-    // ── GPS ───────────────────────────────────────────────────────────────
 
     private void activerPositionUtilisateur() {
         if (ActivityCompat.checkSelfPermission(this,

@@ -18,40 +18,38 @@ import fr.app.application.model.reponse.ReponseItineraires;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
-/**
- * Controller qui gère les appels à l'API pour les itinéraires.
- *
- * GET  /api/itiniraires — récupère la liste
- * POST /api/itiniraires — crée un nouvel itinéraire avec ses lieux
- */
 public class ItineraireController {
 
     private static final String ENDPOINT_ITINERAIRES = "/api/itiniraires";
-
     private final Context contexte;
     private final Gson    gson;
 
-    // ── Interfaces callback ───────────────────────────────────────────────
-
+    /**
+     * Interface de rappel pour la récupération d'une liste d'itinéraires.
+     */
     public interface CallbackItineraires {
         void onSucces(List<Itineraire> itineraires);
         void onErreur(String messageErreur);
     }
 
+    /**
+     * Interface de rappel pour la création d'un nouvel itinéraire.
+     */
     public interface CallbackCreerItineraire {
         void onSucces(Itineraire itineraire);
         void onErreur(String messageErreur);
     }
-
-    // ── Constructeur ─────────────────────────────────────────────────────
 
     public ItineraireController(Context contexte) {
         this.contexte = contexte;
         this.gson     = new Gson();
     }
 
-    // ── GET : récupère tous les itinéraires ───────────────────────────────
-
+    /**
+     * Récupère la liste de tous les itinéraires disponibles.
+     *
+     * @param callback L'interface pour traiter la liste reçue ou l'erreur.
+     */
     public void recupererItineraires(CallbackItineraires callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
@@ -64,8 +62,6 @@ public class ItineraireController {
                         if (reponse2 != null && reponse2.getData() != null) {
                             callback.onSucces(reponse2.getData());
                         } else {
-                            // API Platform retourne parfois directement un tableau JSON
-                            // sans wrapper "data" — on tente le parsing direct
                             Itineraire[] tableau = gson.fromJson(reponse, Itineraire[].class);
                             if (tableau != null) {
                                 callback.onSucces(Arrays.asList(tableau));
@@ -83,14 +79,12 @@ public class ItineraireController {
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    // ── POST : crée un itinéraire avec ses lieux ──────────────────────────
-
     /**
-     * Crée un nouvel itinéraire.
+     * Envoie une requête POST pour créer un nouvel itinéraire.
      *
-     * @param dureTotal durée totale en minutes
-     * @param idLieux   liste des IDs des lieux à inclure
-     * @param callback  résultat ou erreur
+     * @param dureTotal La durée estimée de l'itinéraire en minutes.
+     * @param idLieux   La liste des identifiants (IDs) des lieux à associer.
+     * @param callback  L'interface pour traiter l'itinéraire créé ou l'erreur.
      */
     public void creerItineraire(int dureTotal, List<Integer> idLieux, CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);

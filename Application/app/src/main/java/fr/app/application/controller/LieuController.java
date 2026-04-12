@@ -13,13 +13,6 @@ import fr.app.application.model.reponse.ReponseLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
-/**
- * Controller qui gère les appels à l'API pour récupérer les lieux.
- * Utilise Volley pour le réseau et Gson pour le parsing JSON.
- *
- * L'URL de base est lue depuis ApiConfig (singleton) — plus besoin
- * de toucher ce fichier pour changer l'adresse du serveur.
- */
 public class LieuController {
 
     private static final String ENDPOINT_LIEUX = "/api/lieus";
@@ -38,17 +31,20 @@ public class LieuController {
     }
 
     /**
-     * Récupère tous les lieux depuis l'API.
+     * Récupère la liste complète des lieux sans aucun filtre.
+     *
+     * @param callback L'interface pour traiter la réponse ou l'erreur.
      */
     public void recupererLieux(CallbackLieux callback) {
         recupererLieuxAvecFiltres(null, null, callback);
     }
 
     /**
-     * Récupère les lieux filtrés par catégorie et/ou nom.
+     * Récupère les lieux en appliquant des filtres de catégorie et de recherche textuelle.
      *
-     * @param categorie  ex: "Musée" (null pour ignorer le filtre)
-     * @param recherche  ex: "château" (null pour ignorer le filtre)
+     * @param categorie Nom de la catégorie à filtrer (peut être null).
+     * @param recherche Terme de recherche pour le nom du lieu (peut être null).
+     * @param callback  L'interface pour traiter la réponse ou l'erreur.
      */
     public void recupererLieuxAvecFiltres(String categorie, String recherche, CallbackLieux callback) {
         // L'URL de base est toujours lue depuis le singleton

@@ -15,10 +15,6 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.model.Lieu;
 
-/**
- * Adapter pour la liste des lieux sélectionnés dans CreerItineraireActivity.
- * Affiche chaque lieu avec un numéro d'ordre et un bouton pour le retirer.
- */
 public class LieuSelectionneAdapter extends RecyclerView.Adapter<LieuSelectionneAdapter.ViewHolder> {
 
     public interface OnRetirerListener {

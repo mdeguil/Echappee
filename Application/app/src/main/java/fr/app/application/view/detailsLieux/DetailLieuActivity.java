@@ -25,25 +25,13 @@ import fr.app.application.controller.DetailLieuController;
 import fr.app.application.model.DetailLieux;
 import fr.app.application.model.Lieu;
 
-/**
- * Affiche le détail complet d'un lieu touristique.
- *
- * Données transmises par Intent (depuis ListeLieuxActivity) :
- *   - id, nom, photo principale, catégorie, note
- *
- * Données chargées depuis l'API (GET /api/lieux/{id}) :
- *   - description, horaires, tarif, accessibilite, photos
- */
 public class DetailLieuActivity extends AppCompatActivity {
 
-    // ── Clés des extras ───────────────────────────────────────────────────
     public static final String EXTRA_ID        = "extra_id";
     public static final String EXTRA_NOM       = "extra_nom";
     public static final String EXTRA_PHOTO     = "extra_photo";
     public static final String EXTRA_CATEGORIE = "extra_categorie";
     public static final String EXTRA_NOTE      = "extra_note";
-
-    // ── Vues ──────────────────────────────────────────────────────────────
     private ImageView    imgPhoto;
     private TextView     tvNom;
     private Chip         chipCategorie;
@@ -51,26 +39,17 @@ public class DetailLieuActivity extends AppCompatActivity {
     private TextView     tvNote;
     private ProgressBar  progressBar;
     private TextView     tvErreurDetail;
-
     private View         sectionDescription;
     private TextView     tvDescription;
-
     private View         sectionHoraires;
     private TextView     tvHoraires;
-
     private View         sectionTarifs;
     private TextView     tvTarifs;
-
     private View         sectionAccessibilite;
     private TextView     tvAccessibilite;
-
     private View         sectionPhotos;
     private LinearLayout galeriePhotos;
-
-    // ── Controller ────────────────────────────────────────────────────────
     private DetailLieuController controleurDetail;
-
-    // ── Cycle de vie ──────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,8 +95,6 @@ public class DetailLieuActivity extends AppCompatActivity {
         controleurDetail     = new DetailLieuController(this);
     }
 
-    // ── Données de base (Intent) ──────────────────────────────────────────
-
     private void afficherDonneesBase() {
         Intent i = getIntent();
 
@@ -139,8 +116,6 @@ public class DetailLieuActivity extends AppCompatActivity {
             tvNote.setText("Non noté");
         }
     }
-
-    // ── Chargement du détail via API ──────────────────────────────────────
 
     private void chargerDetail() {
         int id = getIntent().getIntExtra(EXTRA_ID, -1);
@@ -198,8 +173,6 @@ public class DetailLieuActivity extends AppCompatActivity {
         }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-
     private void afficherSection(View section, TextView textView, String valeur) {
         if (valeur != null && !valeur.trim().isEmpty()) {
             textView.setText(valeur.trim());
@@ -249,8 +222,6 @@ public class DetailLieuActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-    // ── Factory method ────────────────────────────────────────────────────
 
     public static Intent creerIntent(Context contexte, Lieu lieu) {
         Intent intent = new Intent(contexte, DetailLieuActivity.class);
