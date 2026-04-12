@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.inscription;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import fr.app.application.R;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
+import fr.app.application.view.connexion.ConnexionActivity;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;

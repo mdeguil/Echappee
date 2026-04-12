@@ -1,7 +1,6 @@
-package fr.app.application.view;
+package fr.app.application.view.lieux;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -23,13 +22,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.Gson;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,9 +34,12 @@ import java.util.Map;
 
 import fr.app.application.R;
 import fr.app.application.model.Lieu;
-import fr.app.application.model.ReponseLieux;
+import fr.app.application.model.reponse.ReponseLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
+import fr.app.application.view.adapter.LieuAdapter;
+import fr.app.application.view.itiniraires.CreerItineraireActivity;
+import fr.app.application.view.itiniraires.ItineraireActivity;
 
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
 

@@ -1,9 +1,8 @@
-package fr.app.application.view;
+package fr.app.application.view.itiniraires;
 
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,13 +16,14 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.model.Itineraire;
+import fr.app.application.view.adapter.ItineraireAdapter;
 
 public class ItineraireActivity extends AppCompatActivity {
 
     private ProgressBar          barreChargement;
     private View                 layoutAucunItineraire; // Changé pour le conteneur
     private RecyclerView         recyclerItineraires;
-    private ItineraireAdapter    adaptateur;
+    private ItineraireAdapter adaptateur;
     private ItineraireController controleur;
 
     private List<Itineraire> listeItineraires = new ArrayList<>();

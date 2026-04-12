@@ -9,7 +9,7 @@ import com.google.gson.Gson;
 import java.util.List;
 
 import fr.app.application.model.Lieu;
-import fr.app.application.model.ReponseLieux;
+import fr.app.application.model.reponse.ReponseLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 

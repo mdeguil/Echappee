@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import fr.app.application.model.Itineraire;
-import fr.app.application.model.ReponseItineraires;
+import fr.app.application.model.reponse.ReponseItineraires;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 

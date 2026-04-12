@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.adapter;
 
 import android.content.Context;
 import android.content.Intent;
@@ -18,6 +18,7 @@ import java.util.List;
 
 import fr.app.application.R;
 import fr.app.application.model.Lieu;
+import fr.app.application.view.detailsLieux.DetailLieuActivity;
 
 /**
  * Adapter RecyclerView pour afficher la liste des lieux touristiques.

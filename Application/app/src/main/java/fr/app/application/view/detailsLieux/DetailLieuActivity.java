@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.detailsLieux;
 
 import android.content.Context;
 import android.content.Intent;

@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.itiniraires;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -34,6 +34,7 @@ import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.controller.LieuController;
 import fr.app.application.model.Lieu;
+import fr.app.application.view.adapter.LieuSelectionneAdapter;
 
 /**
  * Permet à l'utilisateur de créer un itinéraire en :
@@ -64,7 +65,7 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     private final Map<Integer, Boolean>lieuxSelectionnesMap = new HashMap<>();
 
     // ── Adapters & controllers ────────────────────────────────────────────
-    private LieuSelectionneAdapter  adaptateur;
+    private LieuSelectionneAdapter adaptateur;
     private LieuController          lieuController;
     private ItineraireController    itineraireController;
 

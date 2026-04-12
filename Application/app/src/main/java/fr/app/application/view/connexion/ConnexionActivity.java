@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.connexion;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -23,6 +23,8 @@ import java.util.Scanner;
 
 import fr.app.application.R;
 import fr.app.application.utils.ApiConfig;
+import fr.app.application.view.inscription.InscriptionActivity;
+import fr.app.application.view.lieux.ListeLieuxActivity;
 
 public class ConnexionActivity extends AppCompatActivity {
 

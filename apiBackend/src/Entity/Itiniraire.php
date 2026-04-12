@@ -22,7 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
         ),
         new Post(
             input:     ItineraireInput::class,
-            output:     ItineraireOutput::class,
+            output:    ItineraireOutput::class,
             processor: ItineraireProcessor::class,
         )
     ]

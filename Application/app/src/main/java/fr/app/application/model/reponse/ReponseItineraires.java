@@ -1,7 +1,9 @@
-package fr.app.application.model;
+package fr.app.application.model.reponse;
 
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
+
+import fr.app.application.model.Itineraire;
 
 /**
  * Wrapper de la réponse API pour la liste des itinéraires.

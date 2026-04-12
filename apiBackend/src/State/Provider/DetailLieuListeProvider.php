@@ -6,10 +6,10 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Repository\DetailLieuRepository;
 
-final class DetailLieuListeProvider implements ProviderInterface
+final readonly class DetailLieuListeProvider implements ProviderInterface
 {
     public function __construct(
-        private readonly DetailLieuRepository $depotDetailLieu,
+        private DetailLieuRepository $depotDetailLieu,
     ) {}
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): object
