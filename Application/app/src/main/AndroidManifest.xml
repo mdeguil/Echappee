@@ -18,6 +18,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".view.CreerItineraireActivity"
+            android:exported="false" />
+        <activity
             android:name=".view.InscriptionActivity"
             android:exported="false" />
 
@@ -31,8 +34,7 @@
 
         <activity
             android:name=".view.ItineraireActivity"
-            android:exported="false"/>
-
+            android:exported="false" />
         <activity
             android:name=".view.ConnexionActivity"
             android:exported="true">
@@ -42,12 +44,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".view.DetailLieuActivity"
-            android:exported="true">
-        </activity>
-        <activity android:name=".view.ListeLieuxActivity"
-            android:exported="true">
-        </activity>
+        <activity
+            android:name=".view.DetailLieuActivity"
+            android:exported="true"></activity>
+        <activity
+            android:name=".view.ListeLieuxActivity"
+            android:exported="true"></activity>
     </application>
 
 </manifest>

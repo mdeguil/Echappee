@@ -3,6 +3,7 @@ namespace App\State;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
+use App\Dto\ItineraireInput;
 use App\Dto\ItineraireOutput;
 use App\Dto\ListeLieuxOutput;
 use App\Entity\Itiniraire;
@@ -37,16 +38,15 @@ class ItineraireProcessor implements ProcessorInterface
         $this->em->persist($itineraire);
         $this->em->flush();
 
-        // ── Construire le DTO de sortie ──────────────────────────────────────
         $output           = new ItineraireOutput();
         $output->id        = $itineraire->getId();
         $output->dureTotal = $itineraire->getDureTotal();
 
         foreach ($itineraire->getListeLieux() as $ll) {
-            $llOutput         = new ListeLieuxOutput();
-            $llOutput->id      = $ll->getId();
-            $llOutput->idLieu  = $ll->getIdLieu()->getId();
-            $llOutput->nomLieu = $ll->getIdLieu()->getNom();
+            $llOutput          = new ListeLieuxOutput();
+            $llOutput->id       = $ll->getId();
+            $llOutput->idLieu   = $ll->getIdLieu()->getId();
+            $llOutput->nomLieu  = $ll->getIdLieu()->getNom();
             $output->listeLieux[] = $llOutput;
         }
 

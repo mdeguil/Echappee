@@ -66,15 +66,14 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         barreChargement = findViewById(R.id.barreChargement);
 
-        //btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
+        btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
         btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
 
-        /**
-        btnCreerItineraire.setOnClickListener(v -> {
-            Intent intent = new Intent(this, ItineraireActivity.class);
-            startActivity(intent);
-        });
-         **/
+
+        btnCreerItineraire.setOnClickListener(v ->
+                startActivity(new Intent(this, CreerItineraireActivity.class))
+        );
+
 
         btnVoirItineraires.setOnClickListener(v -> {
             Intent intent = new Intent(this, ItineraireActivity.class);
