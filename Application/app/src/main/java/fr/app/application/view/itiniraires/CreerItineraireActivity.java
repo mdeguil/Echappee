@@ -34,28 +34,37 @@ import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.controller.LieuController;
 import fr.app.application.model.Lieu;
+import fr.app.application.utils.ApiConfig;
+import fr.app.application.utils.DirectionsUtils;
 import fr.app.application.view.adapter.LieuSelectionneAdapter;
 
 public class CreerItineraireActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    // Durée estimée par lieu en minutes
-    private static final int    DUREE_PAR_LIEU   = 30;
-    private static final int    CODE_PERMISSION  = 1002;
-    private static final LatLng CENTRE_CHARENTE  = new LatLng(45.6466, 0.1560);
-    private static final float  ZOOM_INITIAL     = 9f;
-    private GoogleMap            carteMaps;
-    private ProgressBar          barreChargement;
-    private TextView             tvDureeCalculee;
-    private TextView             tvAucunLieu;
-    private RecyclerView         recyclerLieuxSelectionnes;
-    private MaterialButton       btnCreer;
-    private final List<Lieu>           tousLesLieux         = new ArrayList<>();
-    private final List<Lieu>           lieuxSelectionnes    = new ArrayList<>();
-    private final Map<Integer, Marker> marqueurParId        = new HashMap<>();
-    private final Map<Integer, Boolean>lieuxSelectionnesMap = new HashMap<>();
+    private static final int    CODE_PERMISSION = 1002;
+    private static final LatLng CENTRE_CHARENTE = new LatLng(45.6466, 0.1560);
+    private static final float  ZOOM_INITIAL    = 9f;
+
+    // ── Vues ─────────────────────────────────────────────────────────────
+    private GoogleMap           carteMaps;
+    private ProgressBar         barreChargement;
+    private TextView            tvDureeCalculee;
+    private TextView            tvAucunLieu;
+    private RecyclerView        recyclerLieuxSelectionnes;
+    private MaterialButton      btnCreer;
+
+    // ── Données ──────────────────────────────────────────────────────────
+    private final List<Lieu>            tousLesLieux         = new ArrayList<>();
+    private final List<Lieu>            lieuxSelectionnes    = new ArrayList<>();
+    private final Map<Integer, Marker>  marqueurParId        = new HashMap<>();
+    private final Map<Integer, Boolean> lieuxSelectionnesMap = new HashMap<>();
+
+    // Durée calculée par Directions API (null = pas encore calculée)
+    private Integer dureeCalculeeMinutes = null;
+
+    // ── Controllers & Adapters ────────────────────────────────────────────
     private LieuSelectionneAdapter adaptateur;
-    private LieuController          lieuController;
-    private ItineraireController    itineraireController;
+    private LieuController         lieuController;
+    private ItineraireController   itineraireController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,12 +83,14 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         itineraireController = new ItineraireController(this);
     }
 
+    // ── Initialisation ────────────────────────────────────────────────────
+
     private void initVues() {
-        barreChargement          = findViewById(R.id.barreChargementCreer);
-        tvDureeCalculee          = findViewById(R.id.tvDureeCalculee);
-        tvAucunLieu              = findViewById(R.id.tvAucunLieuSelectionne);
+        barreChargement           = findViewById(R.id.barreChargementCreer);
+        tvDureeCalculee           = findViewById(R.id.tvDureeCalculee);
+        tvAucunLieu               = findViewById(R.id.tvAucunLieuSelectionne);
         recyclerLieuxSelectionnes = findViewById(R.id.recyclerLieuxSelectionnes);
-        btnCreer                 = findViewById(R.id.btnCreerItineraire);
+        btnCreer                  = findViewById(R.id.btnCreerItineraire);
 
         recyclerLieuxSelectionnes.setLayoutManager(new LinearLayoutManager(this));
         adaptateur = new LieuSelectionneAdapter(this, lieuxSelectionnes, this::retirerLieu);
@@ -98,16 +109,15 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    /**
-     * Initialise la carte et configure l'écouteur de clic sur les marqueurs.
-     * * Chaque clic sur un marqueur déclenche la méthode {@link #basculerSelectionLieu}.
-     */
+    // ── Carte ─────────────────────────────────────────────────────────────
+
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         carteMaps = googleMap;
         carteMaps.getUiSettings().setZoomControlsEnabled(true);
         carteMaps.getUiSettings().setCompassEnabled(true);
         carteMaps.moveCamera(CameraUpdateFactory.newLatLngZoom(CENTRE_CHARENTE, ZOOM_INITIAL));
+
         carteMaps.setOnMarkerClickListener(marqueur -> {
             Integer idLieu = (Integer) marqueur.getTag();
             if (idLieu != null) {
@@ -129,10 +139,7 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                 barreChargement.setVisibility(View.GONE);
                 tousLesLieux.clear();
                 tousLesLieux.addAll(lieux);
-
-                for (Lieu lieu : lieux) {
-                    ajouterMarqueur(lieu);
-                }
+                for (Lieu lieu : lieux) ajouterMarqueur(lieu);
             }
 
             @Override
@@ -150,7 +157,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
 
         LatLng position = new LatLng(lieu.getLatitude(), lieu.getLongitude());
-
         Marker marqueur = carteMaps.addMarker(new MarkerOptions()
                 .position(position)
                 .title(lieu.getNom())
@@ -163,12 +169,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    /**
-     * Gère l'ajout ou le retrait d'un lieu dans l'itinéraire en cours de création.
-     *
-     * @param idLieu   L'identifiant du lieu cliqué.
-     * @param marqueur La référence visuelle du marqueur sur la carte.
-     */
+    // ── Sélection des lieux ───────────────────────────────────────────────
+
     private void basculerSelectionLieu(int idLieu, Marker marqueur) {
         boolean estSelectionne = Boolean.TRUE.equals(lieuxSelectionnesMap.get(idLieu));
 
@@ -188,16 +190,13 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
 
         adaptateur.notifyDataSetChanged();
-        mettreAJourDuree();
         mettreAJourBouton();
         mettreAJourMessageVide();
+
+        // Recalculer la durée à chaque changement de sélection
+        recalculerDuree();
     }
 
-    /**
-     * Supprime un lieu de la sélection actuelle.
-     *
-     * @param lieu L'objet Lieu à retirer.
-     */
     private void retirerLieu(Lieu lieu) {
         retirerLieuParId(lieu.getId());
         Marker marqueur = marqueurParId.get(lieu.getId());
@@ -206,9 +205,11 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
             marqueur.setSnippet("Appuyer pour sélectionner");
         }
         adaptateur.notifyDataSetChanged();
-        mettreAJourDuree();
         mettreAJourBouton();
         mettreAJourMessageVide();
+
+        // Recalculer la durée après retrait
+        recalculerDuree();
     }
 
     private void retirerLieuParId(int idLieu) {
@@ -223,29 +224,83 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         return null;
     }
 
-    /**
-     * Calcule et affiche la durée estimée du parcours en fonction du nombre
-     * de lieux sélectionnés (basé sur une constante de temps par site).
-     * * Formate le texte pour afficher des heures ou uniquement des minutes.
-     */
+    private void recalculerDuree() {
+        if (lieuxSelectionnes.isEmpty()) {
+            dureeCalculeeMinutes = null;
+            mettreAJourDuree();
+            return;
+        }
+
+        if (lieuxSelectionnes.size() == 1) {
+            dureeCalculeeMinutes = 0;
+            mettreAJourDuree();
+            return;
+        }
+
+        tvDureeCalculee.setText("Calcul du trajet en cours...");
+        btnCreer.setEnabled(false);
+
+        DirectionsUtils.calculerDureeAPied(
+                this,
+                lieuxSelectionnes,
+                new DirectionsUtils.CallbackDuree() {
+                    @Override
+                    public void onSucces(int dureeEnMinutes) {
+                        dureeCalculeeMinutes = dureeEnMinutes;
+                        mettreAJourDuree();
+                        btnCreer.setEnabled(!lieuxSelectionnes.isEmpty());
+                    }
+
+                    @Override
+                    public void onErreur(String messageErreur) {
+                        dureeCalculeeMinutes = 0;
+                        tvDureeCalculee.setText("Durée indisponible (Directions API)");
+                        btnCreer.setEnabled(!lieuxSelectionnes.isEmpty());
+                        Toast.makeText(CreerItineraireActivity.this,
+                                "Impossible de calculer le trajet : " + messageErreur,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+    }
+
     private void mettreAJourDuree() {
-        int dureeMinutes = lieuxSelectionnes.size() * DUREE_PAR_LIEU;
-        int heures  = dureeMinutes / 60;
-        int minutes = dureeMinutes % 60;
+        if (lieuxSelectionnes.isEmpty()) {
+            tvDureeCalculee.setText("Sélectionnez des lieux sur la carte");
+            return;
+        }
+
+        if (lieuxSelectionnes.size() == 1) {
+            tvDureeCalculee.setText("Sélectionnez au moins un autre lieu");
+            return;
+        }
+
+        if (dureeCalculeeMinutes == null) {
+            tvDureeCalculee.setText("Calcul du trajet en cours...");
+            return;
+        }
+
+        if (dureeCalculeeMinutes == 0) {
+            tvDureeCalculee.setText("Durée de trajet : indisponible");
+            return;
+        }
+
+        int heures  = dureeCalculeeMinutes / 60;
+        int minutes = dureeCalculeeMinutes % 60;
 
         String dureeTexte;
-        if (lieuxSelectionnes.isEmpty()) {
-            dureeTexte = "Sélectionnez des lieux sur la carte";
-        } else if (heures > 0) {
-            dureeTexte = "Durée estimée : " + heures + "h" + (minutes > 0 ? minutes + "min" : "");
+        if (heures > 0) {
+            dureeTexte = "🚶 Trajet à pied : " + heures + "h" + (minutes > 0 ? minutes + "min" : "");
         } else {
-            dureeTexte = "Durée estimée : " + dureeMinutes + " min";
+            dureeTexte = "🚶 Trajet à pied : " + dureeCalculeeMinutes + " min";
         }
         tvDureeCalculee.setText(dureeTexte);
     }
 
     private void mettreAJourBouton() {
-        btnCreer.setEnabled(!lieuxSelectionnes.isEmpty());
+        if (dureeCalculeeMinutes != null || lieuxSelectionnes.size() <= 1) {
+            btnCreer.setEnabled(!lieuxSelectionnes.isEmpty());
+        }
     }
 
     private void mettreAJourMessageVide() {
@@ -253,16 +308,14 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         recyclerLieuxSelectionnes.setVisibility(lieuxSelectionnes.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
-    /**
-     * Compile les données de l'itinéraire
-     */
+
     private void creerItineraire() {
         if (lieuxSelectionnes.isEmpty()) return;
 
         btnCreer.setEnabled(false);
         barreChargement.setVisibility(View.VISIBLE);
 
-        int dureTotal = lieuxSelectionnes.size() * DUREE_PAR_LIEU;
+        int dureTotal = dureeCalculeeMinutes != null ? dureeCalculeeMinutes : 0;
 
         List<Integer> idLieux = new ArrayList<>();
         for (Lieu lieu : lieuxSelectionnes) {
@@ -274,10 +327,14 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                     @Override
                     public void onSucces(fr.app.application.model.Itineraire itineraire) {
                         barreChargement.setVisibility(View.GONE);
+                        String dureeAffichee = dureTotal > 0
+                                ? formatDuree(dureTotal)
+                                : "durée inconnue";
                         Toast.makeText(CreerItineraireActivity.this,
-                                "Itinéraire créé avec " + lieuxSelectionnes.size() + " lieux !",
+                                "Itinéraire créé ! " + lieuxSelectionnes.size()
+                                        + " lieux — " + dureeAffichee + " à pied",
                                 Toast.LENGTH_SHORT).show();
-                        finish(); // retour à l'écran précédent
+                        finish();
                     }
 
                     @Override
@@ -289,6 +346,13 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                                 Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    private String formatDuree(int minutes) {
+        int h = minutes / 60;
+        int m = minutes % 60;
+        if (h > 0) return h + "h" + (m > 0 ? m + "min" : "");
+        return m + " min";
     }
 
     private void activerPositionUtilisateur() {
