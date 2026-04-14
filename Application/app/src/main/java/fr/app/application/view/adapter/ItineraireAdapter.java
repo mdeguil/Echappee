@@ -36,32 +36,39 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Itineraire itineraire = itineraires.get(position);
 
+        // ── Titre ────────────────────────────────────────────────────────
         holder.tvTitre.setText("Itinéraire #" + itineraire.getId());
 
-        if (itineraire.getDureTotal() != null) {
+        // ── Durée ─────────────────────────────────────────────────────────
+        if (itineraire.getDureTotal() != null && itineraire.getDureTotal() > 0) {
             int heures  = itineraire.getDureTotal() / 60;
             int minutes = itineraire.getDureTotal() % 60;
             if (heures > 0) {
-                holder.tvDuree.setText("Durée : " + heures + "h" + (minutes > 0 ? String.format("%02d", minutes) : ""));
+                holder.tvDuree.setText("🚶 " + heures + "h" + (minutes > 0 ? String.format("%02d", minutes) : ""));
             } else {
-                holder.tvDuree.setText("Durée : " + minutes + " min");
+                holder.tvDuree.setText("🚶 " + minutes + " min");
             }
         } else {
             holder.tvDuree.setText("Durée non définie");
         }
 
+        // ── Nombre de lieux ───────────────────────────────────────────────
         int nbLieux = (itineraire.getLieux() != null) ? itineraire.getLieux().size() : 0;
         holder.tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
 
-        if (itineraire.getLieux() != null && !itineraire.getLieux().isEmpty()) {
-            StringBuilder sb = new StringBuilder();
-            for (Itineraire.LieuRef lieu : itineraire.getLieux()) {
-                if (lieu.getNom() != null) {
-                    if (sb.length() > 0) sb.append(" → ");
-                    sb.append(lieu.getNom());
-                }
+        // ── Départ → Arrivée uniquement ───────────────────────────────────
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
+        if (lieux != null && !lieux.isEmpty()) {
+            String nomDepart  = lieux.get(0).getNom();
+            String nomArrivee = lieux.get(lieux.size() - 1).getNom();
+
+            if (lieux.size() == 1) {
+                // Un seul lieu
+                holder.tvLieux.setText("📍 " + nomDepart);
+            } else {
+                // Départ → Arrivée
+                holder.tvLieux.setText("📍 " + nomDepart + "  →  🏁 " + nomArrivee);
             }
-            holder.tvLieux.setText(sb.toString());
             holder.tvLieux.setVisibility(View.VISIBLE);
         } else {
             holder.tvLieux.setText("Aucun lieu associé");
