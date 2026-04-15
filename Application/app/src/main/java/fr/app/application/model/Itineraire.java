@@ -3,12 +3,6 @@ package fr.app.application.model;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-/**
- * Modèle représentant un itinéraire.
- * Correspond à l'entité Itiniraire du backend Symfony.
- *
- * Endpoint : GET /api/itiniraires
- */
 public class Itineraire {
 
     @SerializedName("id")
@@ -23,8 +17,6 @@ public class Itineraire {
     @SerializedName("nbLieux")
     private int nbLieux;
 
-    // ── Getters ───────────────────────────────────────────────────────────
-
     public int getId()               { return id; }
     public Integer getDureTotal()    { return dureTotal; }
     public List<LieuRef> getLieux()  { return lieux; }
@@ -34,6 +26,9 @@ public class Itineraire {
         return (lieux != null) ? lieux.size() : 0;
     }
 
+    /**
+     * Cette classe interne fait office de DTO simplifié.
+     */
     public static class LieuRef {
 
         @SerializedName("id")

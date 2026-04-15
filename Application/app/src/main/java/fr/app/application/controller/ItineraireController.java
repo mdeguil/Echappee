@@ -25,8 +25,6 @@ public class ItineraireController {
     private final Context contexte;
     private final Gson    gson;
 
-    // ── Interfaces callback ───────────────────────────────────────────────
-
     public interface CallbackItineraires {
         void onSucces(List<Itineraire> itineraires);
         void onErreur(String messageErreur);
@@ -42,15 +40,15 @@ public class ItineraireController {
         void onErreur(String messageErreur);
     }
 
-    // ── Constructeur ─────────────────────────────────────────────────────
-
     public ItineraireController(Context contexte) {
         this.contexte = contexte;
         this.gson     = new Gson();
     }
 
-    // ── GET : liste des itinéraires ───────────────────────────────────────
-
+    /**
+     * Récupère la liste complète des itineraires.
+     * Endpoint : GET /api/itiniraires
+     */
     public void recupererItineraires(CallbackItineraires callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
@@ -80,8 +78,10 @@ public class ItineraireController {
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    // ── POST : créer un itinéraire ────────────────────────────────────────
-
+    /**
+     * Crée un itinéraire avec une durée estimée et une liste d'identifiants de lieux.
+     * Endpoint : POST /api/itiniraires
+     */
     public void creerItineraire(int dureTotal, List<Integer> idLieux,
                                 CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
@@ -116,7 +116,6 @@ public class ItineraireController {
         }
     }
 
-    // ── DELETE : supprimer un itinéraire ──────────────────────────────────
 
     /**
      * Supprime un itinéraire par son ID.

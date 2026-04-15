@@ -43,25 +43,17 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     private static final int    CODE_PERMISSION = 1002;
     private static final LatLng CENTRE_CHARENTE = new LatLng(45.6466, 0.1560);
     private static final float  ZOOM_INITIAL    = 9f;
-
-    // ── Vues ─────────────────────────────────────────────────────────────
     private GoogleMap           carteMaps;
     private ProgressBar         barreChargement;
     private TextView            tvDureeCalculee;
     private TextView            tvAucunLieu;
     private RecyclerView        recyclerLieuxSelectionnes;
     private MaterialButton      btnCreer;
-
-    // ── Données ──────────────────────────────────────────────────────────
     private final List<Lieu>            tousLesLieux         = new ArrayList<>();
     private final List<Lieu>            lieuxSelectionnes    = new ArrayList<>();
     private final Map<Integer, Marker>  marqueurParId        = new HashMap<>();
     private final Map<Integer, Boolean> lieuxSelectionnesMap = new HashMap<>();
-
-    // Durée calculée par Directions API (null = pas encore calculée)
     private Integer dureeCalculeeMinutes = null;
-
-    // ── Controllers & Adapters ────────────────────────────────────────────
     private LieuSelectionneAdapter adaptateur;
     private LieuController         lieuController;
     private ItineraireController   itineraireController;
@@ -82,8 +74,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         lieuController       = new LieuController(this);
         itineraireController = new ItineraireController(this);
     }
-
-    // ── Initialisation ────────────────────────────────────────────────────
 
     private void initVues() {
         barreChargement           = findViewById(R.id.barreChargementCreer);
@@ -108,8 +98,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
             fragmentCarte.getMapAsync(this);
         }
     }
-
-    // ── Carte ─────────────────────────────────────────────────────────────
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -169,8 +157,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
     }
 
-    // ── Sélection des lieux ───────────────────────────────────────────────
-
     private void basculerSelectionLieu(int idLieu, Marker marqueur) {
         boolean estSelectionne = Boolean.TRUE.equals(lieuxSelectionnesMap.get(idLieu));
 
@@ -193,7 +179,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         mettreAJourBouton();
         mettreAJourMessageVide();
 
-        // Recalculer la durée à chaque changement de sélection
         recalculerDuree();
     }
 
@@ -208,7 +193,6 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         mettreAJourBouton();
         mettreAJourMessageVide();
 
-        // Recalculer la durée après retrait
         recalculerDuree();
     }
 

@@ -23,6 +23,9 @@ public class DirectionsUtils {
         void onErreur(String messageErreur);
     }
 
+    /**
+     * Calcule la durée totale estimée d'un itinéraire à pied en interrogeant l'API OSRM.
+     */
     public static void calculerDureeAPied(
             Context contexte,
             List<Lieu> lieux,

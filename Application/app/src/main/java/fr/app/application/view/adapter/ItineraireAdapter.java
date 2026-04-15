@@ -51,7 +51,6 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
         Itineraire itineraire = itineraires.get(position);
         List<Itineraire.LieuRef> lieux = itineraire.getLieux();
 
-        // ── TITRE : Départ → Arrivée ──────────────────────────────────────
         if (lieux != null && !lieux.isEmpty()) {
             String nomDepart  = lieux.get(lieux.size() - 1).getNom();
             String nomArrivee = lieux.get(0).getNom();
@@ -83,7 +82,6 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
             holder.tvDuree.setText("🚶 Durée non définie");
         }
 
-        // ── Clic sur la card → ouvre le détail ───────────────────────────
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(contexte, DetailItineraireActivity.class);
             intent.putExtra(
@@ -93,7 +91,6 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
             contexte.startActivity(intent);
         });
 
-        // ── Bouton supprimer → confirmation puis callback ─────────────────
         holder.btnSupprimer.setOnClickListener(v -> {
             new AlertDialog.Builder(contexte)
                     .setTitle("Supprimer l'itinéraire")
