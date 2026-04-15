@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Dto\ItineraireInput;
@@ -24,7 +25,8 @@ use Doctrine\ORM\Mapping as ORM;
             input:     ItineraireInput::class,
             output:    ItineraireOutput::class,
             processor: ItineraireProcessor::class,
-        )
+        ),
+        new Delete(),
     ]
 )]
 class Itiniraire
