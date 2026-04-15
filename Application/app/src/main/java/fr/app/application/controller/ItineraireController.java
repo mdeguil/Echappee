@@ -21,35 +21,36 @@ import fr.app.application.utils.VolleyUtils;
 public class ItineraireController {
 
     private static final String ENDPOINT_ITINERAIRES = "/api/itiniraires";
+
     private final Context contexte;
     private final Gson    gson;
 
-    /**
-     * Interface de rappel pour la récupération d'une liste d'itinéraires.
-     */
+    // ── Interfaces callback ───────────────────────────────────────────────
+
     public interface CallbackItineraires {
         void onSucces(List<Itineraire> itineraires);
         void onErreur(String messageErreur);
     }
 
-    /**
-     * Interface de rappel pour la création d'un nouvel itinéraire.
-     */
     public interface CallbackCreerItineraire {
         void onSucces(Itineraire itineraire);
         void onErreur(String messageErreur);
     }
+
+    public interface CallbackSupprimer {
+        void onSucces();
+        void onErreur(String messageErreur);
+    }
+
+    // ── Constructeur ─────────────────────────────────────────────────────
 
     public ItineraireController(Context contexte) {
         this.contexte = contexte;
         this.gson     = new Gson();
     }
 
-    /**
-     * Récupère la liste de tous les itinéraires disponibles.
-     *
-     * @param callback L'interface pour traiter la liste reçue ou l'erreur.
-     */
+    // ── GET : liste des itinéraires ───────────────────────────────────────
+
     public void recupererItineraires(CallbackItineraires callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
@@ -79,14 +80,10 @@ public class ItineraireController {
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    /**
-     * Envoie une requête POST pour créer un nouvel itinéraire.
-     *
-     * @param dureTotal La durée estimée de l'itinéraire en minutes.
-     * @param idLieux   La liste des identifiants (IDs) des lieux à associer.
-     * @param callback  L'interface pour traiter l'itinéraire créé ou l'erreur.
-     */
-    public void creerItineraire(int dureTotal, List<Integer> idLieux, CallbackCreerItineraire callback) {
+    // ── POST : créer un itinéraire ────────────────────────────────────────
+
+    public void creerItineraire(int dureTotal, List<Integer> idLieux,
+                                CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
         try {
@@ -94,9 +91,7 @@ public class ItineraireController {
             body.put("dureTotal", dureTotal);
 
             JSONArray lieuxArray = new JSONArray();
-            for (int id : idLieux) {
-                lieuxArray.put(id);
-            }
+            for (int id : idLieux) lieuxArray.put(id);
             body.put("listeLieux", lieuxArray);
 
             JsonObjectRequest requete = new JsonObjectRequest(
@@ -119,5 +114,33 @@ public class ItineraireController {
         } catch (Exception e) {
             callback.onErreur("Erreur construction requête : " + e.getMessage());
         }
+    }
+
+    // ── DELETE : supprimer un itinéraire ──────────────────────────────────
+
+    /**
+     * Supprime un itinéraire par son ID.
+     * Endpoint : DELETE /api/itiniraires/{id}
+     */
+    public void supprimerItineraire(int id, CallbackSupprimer callback) {
+        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES + "/" + id);
+
+        StringRequest requete = new StringRequest(
+                Request.Method.DELETE,
+                url,
+                reponse -> callback.onSucces(),
+                erreur -> {
+                    // HTTP 204 No Content est considéré comme une erreur par Volley
+                    // mais c'est en réalité un succès pour un DELETE
+                    if (erreur.networkResponse != null
+                            && erreur.networkResponse.statusCode == 204) {
+                        callback.onSucces();
+                    } else {
+                        callback.onErreur("Erreur réseau : " + erreur.getMessage());
+                    }
+                }
+        );
+
+        VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 }

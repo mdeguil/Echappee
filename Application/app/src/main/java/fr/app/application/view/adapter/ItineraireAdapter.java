@@ -1,27 +1,41 @@
 package fr.app.application.view.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.gson.Gson;
 
 import java.util.List;
 
 import fr.app.application.R;
 import fr.app.application.model.Itineraire;
+import fr.app.application.view.itiniraires.DetailItineraireActivity;
 
 public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.ViewHolder> {
 
-    private final Context           contexte;
-    private final List<Itineraire>  itineraires;
+    public interface OnSupprimerListener {
+        void onSupprimer(Itineraire itineraire, int position);
+    }
 
-    public ItineraireAdapter(Context contexte, List<Itineraire> itineraires) {
-        this.contexte    = contexte;
-        this.itineraires = itineraires;
+    private final Context              contexte;
+    private final List<Itineraire>     itineraires;
+    private final OnSupprimerListener  onSupprimer;
+
+    public ItineraireAdapter(Context contexte,
+                             List<Itineraire> itineraires,
+                             OnSupprimerListener onSupprimer) {
+        this.contexte     = contexte;
+        this.itineraires  = itineraires;
+        this.onSupprimer  = onSupprimer;
     }
 
     @NonNull
@@ -35,45 +49,61 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Itineraire itineraire = itineraires.get(position);
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
 
-        // ── Titre ────────────────────────────────────────────────────────
-        holder.tvTitre.setText("Itinéraire #" + itineraire.getId());
+        // ── TITRE : Départ → Arrivée ──────────────────────────────────────
+        if (lieux != null && !lieux.isEmpty()) {
+            String nomDepart  = lieux.get(lieux.size() - 1).getNom();
+            String nomArrivee = lieux.get(0).getNom();
 
-        // ── Durée ─────────────────────────────────────────────────────────
+            if (lieux.size() == 1) {
+                holder.tvTitre.setText("📍 " + nomDepart);
+            } else {
+                holder.tvTitre.setText("📍 " + nomDepart + "  →  🏁 " + nomArrivee);
+            }
+        } else {
+            holder.tvTitre.setText("Itinéraire #" + itineraire.getId());
+        }
+
+        // ── Nombre de lieux ───────────────────────────────────────────────
+        int nbLieux = itineraire.getNombreDeLieux();
+        holder.tvNbLieux.setText("📌 " + nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
+
+        // ── Durée estimée ─────────────────────────────────────────────────
         if (itineraire.getDureTotal() != null && itineraire.getDureTotal() > 0) {
             int heures  = itineraire.getDureTotal() / 60;
             int minutes = itineraire.getDureTotal() % 60;
             if (heures > 0) {
-                holder.tvDuree.setText("🚶 " + heures + "h" + (minutes > 0 ? String.format("%02d", minutes) : ""));
+                holder.tvDuree.setText("🚶 " + heures + "h"
+                        + (minutes > 0 ? String.format("%02d", minutes) : "") + " à pied");
             } else {
-                holder.tvDuree.setText("🚶 " + minutes + " min");
+                holder.tvDuree.setText("🚶 " + minutes + " min à pied");
             }
         } else {
-            holder.tvDuree.setText("Durée non définie");
+            holder.tvDuree.setText("🚶 Durée non définie");
         }
 
-        // ── Nombre de lieux ───────────────────────────────────────────────
-        int nbLieux = (itineraire.getLieux() != null) ? itineraire.getLieux().size() : 0;
-        holder.tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
+        // ── Clic sur la card → ouvre le détail ───────────────────────────
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(contexte, DetailItineraireActivity.class);
+            intent.putExtra(
+                    DetailItineraireActivity.EXTRA_ITINERAIRE,
+                    new Gson().toJson(itineraire)
+            );
+            contexte.startActivity(intent);
+        });
 
-        // ── Départ → Arrivée uniquement ───────────────────────────────────
-        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
-        if (lieux != null && !lieux.isEmpty()) {
-            String nomDepart  = lieux.get(0).getNom();
-            String nomArrivee = lieux.get(lieux.size() - 1).getNom();
-
-            if (lieux.size() == 1) {
-                // Un seul lieu
-                holder.tvLieux.setText("📍 " + nomDepart);
-            } else {
-                // Départ → Arrivée
-                holder.tvLieux.setText("📍 " + nomDepart + "  →  🏁 " + nomArrivee);
-            }
-            holder.tvLieux.setVisibility(View.VISIBLE);
-        } else {
-            holder.tvLieux.setText("Aucun lieu associé");
-            holder.tvLieux.setVisibility(View.VISIBLE);
-        }
+        // ── Bouton supprimer → confirmation puis callback ─────────────────
+        holder.btnSupprimer.setOnClickListener(v -> {
+            new AlertDialog.Builder(contexte)
+                    .setTitle("Supprimer l'itinéraire")
+                    .setMessage("Voulez-vous vraiment supprimer cet itinéraire ?")
+                    .setPositiveButton("Supprimer", (dialog, which) ->
+                            onSupprimer.onSupprimer(itineraire, holder.getAdapterPosition())
+                    )
+                    .setNegativeButton("Annuler", null)
+                    .show();
+        });
     }
 
     @Override
@@ -82,17 +112,17 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitre;
-        TextView tvDuree;
-        TextView tvNbLieux;
-        TextView tvLieux;
+        TextView       tvTitre;
+        TextView       tvNbLieux;
+        TextView       tvDuree;
+        MaterialButton btnSupprimer;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvTitre   = itemView.findViewById(R.id.tvItineraireTitre);
-            tvDuree   = itemView.findViewById(R.id.tvItineraireDuree);
-            tvNbLieux = itemView.findViewById(R.id.tvItineraireNbLieux);
-            tvLieux   = itemView.findViewById(R.id.tvItineraireLieux);
+            tvTitre      = itemView.findViewById(R.id.tvItineraireTitre);
+            tvNbLieux    = itemView.findViewById(R.id.tvItineraireNbLieux);
+            tvDuree      = itemView.findViewById(R.id.tvItineraireDuree);
+            btnSupprimer = itemView.findViewById(R.id.btnSupprimerItineraire);
         }
     }
 }

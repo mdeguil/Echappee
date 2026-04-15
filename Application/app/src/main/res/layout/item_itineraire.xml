@@ -11,47 +11,64 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <!-- Titre : Itinéraire #N -->
-        <TextView
-            android:id="@+id/tvItineraireTitre"
-            android:layout_width="match_parent"
+        <!-- Contenu principal -->
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginBottom="4dp" />
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-        <!-- Durée -->
-        <TextView
-            android:id="@+id/tvItineraireDuree"
+            <!-- TITRE : Départ → Arrivée -->
+            <TextView
+                android:id="@+id/tvItineraireTitre"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Divider fin -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?attr/colorOutlineVariant"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Nombre de lieux -->
+            <TextView
+                android:id="@+id/tvItineraireNbLieux"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Durée estimée -->
+            <TextView
+                android:id="@+id/tvItineraireDuree"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+        </LinearLayout>
+
+        <!-- Bouton supprimer -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSupprimerItineraire"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:layout_marginBottom="4dp" />
-
-        <!-- Nombre de lieux -->
-        <TextView
-            android:id="@+id/tvItineraireNbLieux"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/colorOnSurfaceVariant"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Séquence des lieux -->
-        <TextView
-            android:id="@+id/tvItineraireLieux"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceBodySmall"
-            android:textColor="?attr/colorOnSurface"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:visibility="gone" />
+            android:layout_marginStart="8dp"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconSize="20dp"
+            android:text=""
+            app:backgroundTint="?attr/colorErrorContainer"
+            app:iconTint="?attr/colorError" />
 
     </LinearLayout>
 
