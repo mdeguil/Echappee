@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface">
+
+    <!-- ── Carte : 55% de l'écran ── -->
+    <fragment
+        android:id="@+id/fragmentCarteCreer"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="55" />
+
+    <!-- ── Panneau bas : 45% de l'écran ── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="45"
+        android:orientation="vertical"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp">
+
+        <!-- Durée calculée + ProgressBar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/tvDureeCalculee"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sélectionnez des lieux sur la carte"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <ProgressBar
+                android:id="@+id/barreChargementCreer"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?attr/colorOutlineVariant"
+            android:layout_marginHorizontal="16dp" />
+
+        <!-- Message si aucun lieu sélectionné -->
+        <TextView
+            android:id="@+id/tvAucunLieuSelectionne"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Aucun lieu sélectionné\nAppuyez sur un marqueur pour l'ajouter"
+            android:gravity="center"
+            android:padding="16dp"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:visibility="visible" />
+
+        <!-- Liste des lieux sélectionnés -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerLieuxSelectionnes"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:clipToPadding="false"
+            android:visibility="gone" />
+
+        <!-- Bouton créer -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreerItineraire"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:text="Créer l'itinéraire"
+            android:enabled="false" />
+
+    </LinearLayout>
+
+</LinearLayout>

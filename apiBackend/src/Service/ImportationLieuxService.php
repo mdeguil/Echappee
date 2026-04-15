@@ -24,14 +24,21 @@ class ImportationLieuxService
     ) {}
 
     /**
+     * Importe les lieux du patrimoine culturel de la Charente depuis l'API Open Data.
+     * * Cette méthode orchestre l'importation complète :
+     * 1. Initialise les catégories nécessaires en base de données.
+     * 2. Récupère les données géographiques (GeoJSON) via une requête HTTP.
+     * 3. Traite chaque élément pour création ou mise à jour.
+     * 4. Persiste les changements en base de données.
+     *
      * @return array{creations: int, misesAJour: int, erreurs: int, total: int}
+     * Le bilan chiffré de l'opération d'importation.
+     * @throws \Throwable Si une erreur majeure survient durant l'appel API.
      */
     public function importerLieuxCharente(): array
     {
-        // ── Étape 1 : catégories en base avant les lieux ──────────────────
         $this->initialiserCategories();
 
-        // ── Étape 2 : import des lieux ────────────────────────────────────
         $this->journalisation->info('[Data16] Import du patrimoine culturel...');
 
         $reponse  = $this->clientHttp->request('GET', self::URL_DATASET);
@@ -61,12 +68,19 @@ class ImportationLieuxService
         return $bilan;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
     /**
-     * Crée en base les catégories trouvées dans l'API si elles n'existent pas.
-     * On fait d'abord un appel API pour récupérer toutes les valeurs distinctes
-     * de Type_de_patrimoine_culturel, puis on les insère en un seul flush.
+     * Initialise et synchronise les catégories de patrimoine culturel en base de données.
+     * * Cette méthode récupère l'ensemble des données depuis l'API externe pour extraire
+     * la liste unique des types de patrimoine. Elle vérifie ensuite l'existence de chaque
+     * catégorie en base et ne persiste que les nouvelles entrées pour éviter les doublons.
+     *
+     * @return void
+     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * Si la connexion à l'API échoue.
+     * @throws \Symfony\Contracts\HttpClient\Exception\DecodingExceptionInterface
+     * Si le format de la réponse API est invalide.
      */
     private function initialiserCategories(): void
     {
@@ -75,7 +89,6 @@ class ImportationLieuxService
         $reponse  = $this->clientHttp->request('GET', self::URL_DATASET);
         $features = $reponse->toArray()['features'] ?? [];
 
-        // Collecte des valeurs distinctes depuis l'API
         $nomsDistincts = [];
         foreach ($features as $feature) {
             $nom = $feature['properties']['Type_de_patrimoine_culturel'] ?? null;
@@ -102,8 +115,21 @@ class ImportationLieuxService
         $this->journalisation->info("[Data16] {$nouvelles} catégorie(s) insérée(s).");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
+    /**
+     * Traite un élément (feature) de l'API pour créer ou mettre à jour un Lieu et son Détail.
+     * * Cette méthode assure le mapping des propriétés GeoJSON vers les entités :
+     * 1. Vérifie la présence du nom (identifiant fonctionnel).
+     * 2. Gère l'existence préalable du lieu (Upsert).
+     * 3. Associe la catégorie correspondante.
+     * 4. Remplit les métadonnées du détail (description, horaires, accessibilité).
+     * 5. Tronque les chaînes de caractères à 255 caractères pour la sécurité SQL.
+     *
+     * @param array $feature Les données brutes d'un lieu issues du GeoJSON.
+     * @return bool True si un nouveau lieu a été créé, false s'il s'agit d'une mise à jour.
+     * @throws \InvalidArgumentException Si le nom du lieu est manquant ou vide.
+     */
     private function traiterUnFeature(array $feature): bool
     {
         $p = $feature['properties'] ?? [];
@@ -120,29 +146,23 @@ class ImportationLieuxService
             $lieu = new Lieu();
         }
 
-        // ── Lieu ──────────────────────────────────────────────────────────
         $lieu->setNom(mb_substr($nom, 0, 255));
         $lieu->setLatitude(isset($p['Latitude'])  ? (float) $p['Latitude']  : null);
         $lieu->setLongitude(isset($p['Longitude']) ? (float) $p['Longitude'] : null);
-
-        // Photo toujours null à l'import (sera renseignée manuellement)
         $lieu->setPhoto(null);
 
-        // Liaison vers l'entité Categorie
         $nomCategorie = $p['Type_de_patrimoine_culturel'] ?? null;
         $categorie    = $nomCategorie
             ? $this->depotCategorie->findOneBy(['nom' => $nomCategorie])
             : null;
         $lieu->setCategorie($categorie);
 
-        // ── DetailLieu ────────────────────────────────────────────────────
         $detail = $lieu->getDetail() ?? new DetailLieu();
 
         $detail->setDescription(mb_substr((string) ($p['Descriptif_court'] ?? $p['Descriptif_détaillé'] ?? ''), 0, 255));
         $detail->setHoraires(mb_substr((string) ($p['Période_en_clair'] ?? 'Non renseignés'), 0, 255));
         $detail->setAccessibilite(mb_substr((string) ($p['Marque_Tourisme_et_Handicap'] ?? 'Non renseignée'), 0, 255));
         $detail->setTarif(0);
-        // Photos toujours null à l'import (sera renseignée manuellement)
         $detail->setPhotos(null);
 
         $detail->setLieu($lieu);
@@ -152,23 +172,5 @@ class ImportationLieuxService
         $this->gestionnaireEntites->persist($lieu);
 
         return $estNouveau;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private function extraireUrlSiteWeb(?string $moyensCommunication): ?string
-    {
-        if ($moyensCommunication === null) {
-            return null;
-        }
-
-        foreach (explode('|', $moyensCommunication) as $partie) {
-            if (str_contains($partie, 'Site web (URL)')) {
-                $url = trim(explode('Site web (URL) : ', $partie)[1] ?? '');
-                return $url !== '' ? mb_substr($url, 0, 255) : null;
-            }
-        }
-
-        return null;
     }
 }

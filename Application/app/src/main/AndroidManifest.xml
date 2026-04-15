@@ -18,7 +18,13 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".view.InscriptionActivity"
+            android:name=".view.itiniraires.DetailItineraireActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.itiniraires.CreerItineraireActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.inscription.InscriptionActivity"
             android:exported="false" />
 
         <uses-library
@@ -30,7 +36,10 @@
             android:value="AIzaSyAFFP_NkxnYZQ4rHVD0-nPq_iin_xodeXY" />
 
         <activity
-            android:name=".view.ConnexionActivity"
+            android:name=".view.itiniraires.ItineraireActivity"
+            android:exported="false" />
+        <activity
+            android:name=".view.connexion.ConnexionActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,12 +47,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".view.DetailLieuActivity"
-            android:exported="true">
-        </activity>
-        <activity android:name=".view.ListeLieuxActivity"
-            android:exported="true">
-        </activity>
+        <activity
+            android:name=".view.detailsLieux.DetailLieuActivity"
+            android:exported="true" />
+        <activity
+            android:name=".view.lieux.ListeLieuxActivity"
+            android:exported="true" />
     </application>
 
 </manifest>

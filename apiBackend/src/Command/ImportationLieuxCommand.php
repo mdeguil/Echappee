@@ -11,6 +11,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 // lance l'importation
 // php bin/console app:importer-lieux  | php bin/console app:importer-lieux -vvv
+// lance l'api
+// php -S 0.0.0.0:8000 -t public
 
 #[AsCommand(
     name: 'app:importer-lieux',

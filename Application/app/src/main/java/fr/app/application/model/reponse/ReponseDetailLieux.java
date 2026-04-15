@@ -1,6 +1,8 @@
-package fr.app.application.model;
+package fr.app.application.model.reponse;
 
 import com.google.gson.annotations.SerializedName;
+
+import fr.app.application.model.DetailLieux;
 
 
 public class ReponseDetailLieux {

@@ -1,6 +1,7 @@
-package fr.app.application.view;
+package fr.app.application.view.lieux;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
@@ -21,12 +22,10 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.button.MaterialButton;
 import com.google.gson.Gson;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,13 +34,14 @@ import java.util.Map;
 
 import fr.app.application.R;
 import fr.app.application.model.Lieu;
-import fr.app.application.model.ReponseLieux;
+import fr.app.application.model.reponse.ReponseLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
+import fr.app.application.view.adapter.LieuAdapter;
+import fr.app.application.view.itiniraires.CreerItineraireActivity;
+import fr.app.application.view.itiniraires.ItineraireActivity;
 
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
-
-    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
     private static final String ENDPOINT_LIEUX  = "/api/lieus";
     private static final int    CODE_PERMISSION  = 1001;
     private static final LatLng CENTRE_CHARENTE  = new LatLng(45.6466, 0.1560);
@@ -52,6 +52,8 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private ProgressBar barreChargement;
     private List<Lieu>  listeLieux = new ArrayList<>();
 
+    private MaterialButton btnCreerItineraire, btnVoirItineraires;
+
     private Map<Integer, Marker> marqueurParId = new HashMap<>();
 
     @Override
@@ -60,6 +62,20 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         setContentView(R.layout.activity_liste_lieux);
 
         barreChargement = findViewById(R.id.barreChargement);
+
+        btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
+        btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
+
+
+        btnCreerItineraire.setOnClickListener(v ->
+                startActivity(new Intent(this, CreerItineraireActivity.class))
+        );
+
+
+        btnVoirItineraires.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ItineraireActivity.class);
+            startActivity(intent);
+        });
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
@@ -74,6 +90,11 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    /**
+     * Initialise la carte Google Maps et configure ses interactions.
+     *
+     * @param googleMap L'instance de la carte Google Maps configurée.
+     */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         carteMaps = googleMap;
@@ -93,11 +114,15 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         activerPositionUtilisateur();
 
-        // L'URL est construite depuis le singleton au moment de l'appel
         String url = ApiConfig.getInstance(this).getUrl(ENDPOINT_LIEUX);
         chargerLieux(url);
     }
 
+    /**
+     * Charge les lieux depuis l'API et met à jour simultanément la carte et la liste.
+     *
+     * @param url L'URL complète incluant les éventuels filtres de recherche.
+     */
     private void chargerLieux(String url) {
         barreChargement.setVisibility(View.VISIBLE);
 
@@ -139,6 +164,11 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         VolleyUtils.getInstance(this).addToRequestQueue(requete);
     }
 
+    /**
+     * Ajoute un marqueur interactif sur la carte pour un lieu donné.
+     *
+     * @param lieu L'objet Lieu contenant les coordonnées et les informations à afficher.
+     */
     private void ajouterMarqueurSurCarte(Lieu lieu) {
         if (carteMaps == null) return;
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
@@ -158,6 +188,12 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    /**
+     * Détermine la couleur du marqueur Google Maps en fonction de la catégorie du lieu.
+     *
+     * @param categorie Le nom de la catégorie (ex: "Musée", "Parc et jardin").
+     * @return Une valeur float représentant la teinte du marqueur (ex: BitmapDescriptorFactory.HUE_BLUE).
+     */
     private float obtenirCouleurCategorie(String categorie) {
         if (categorie == null) return BitmapDescriptorFactory.HUE_RED;
         switch (categorie) {
@@ -170,6 +206,11 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    /**
+     * Centre la caméra de la carte sur un lieu spécifique avec un effet d'animation.
+     *
+     * @param lieu L'objet Lieu sur lequel la vue doit se focaliser.
+     */
     private void centrerCarteOnLieu(Lieu lieu) {
         if (carteMaps == null) return;
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
@@ -181,6 +222,11 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         if (marqueur != null) marqueur.showInfoWindow();
     }
 
+    /**
+     * Fait défiler la liste (RecyclerView) de manière fluide jusqu'à un lieu spécifique.
+     *
+     * @param idLieu L'identifiant unique du lieu vers lequel la liste doit défiler.
+     */
     private void faireDefilerListeVers(int idLieu) {
         for (int i = 0; i < listeLieux.size(); i++) {
             if (listeLieux.get(i).getId() == idLieu) {
@@ -191,6 +237,9 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    /**
+     * Active la fonctionnalité de localisation de l'utilisateur sur la carte.
+     */
     private void activerPositionUtilisateur() {
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -203,6 +252,13 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    /**
+     * Gère la réponse de l'utilisateur à la demande de permissions.
+     *
+     * @param codeRequete Le code d'identification de la requête envoyé lors de l'appel initial.
+     * @param permissions Le tableau des permissions demandées.
+     * @param resultats   Le tableau des résultats (accordé ou refusé).
+     */
     @Override
     public void onRequestPermissionsResult(int codeRequete,
                                            @NonNull String[] permissions,

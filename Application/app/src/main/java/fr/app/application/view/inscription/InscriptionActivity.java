@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.inscription;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -13,6 +13,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import fr.app.application.R;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
+import fr.app.application.view.connexion.ConnexionActivity;
+
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -21,17 +23,12 @@ import org.json.JSONObject;
 
 public class InscriptionActivity extends AppCompatActivity {
 
-    // L'endpoint seul — l'URL de base vient du singleton ApiConfig
     private static final String ENDPOINT_INSCRIPTION = "/api/utilisateurs";
-
-    // ─── Vues ────────────────────────────────────────────────────────────────
     private TextInputLayout   tilEmail, tilMotDePasse, tilConfirmationMotDePasse;
     private TextInputEditText etEmail, etMotDePasse, etConfirmationMotDePasse;
     private TextView          tvErreur;
     private ProgressBar       barreChargement;
     private MaterialButton    btnInscription, btnRetourConnexion;
-
-    // ─────────────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,8 +38,6 @@ public class InscriptionActivity extends AppCompatActivity {
         initialiserVues();
         configurerBoutons();
     }
-
-    // ─── Initialisation ──────────────────────────────────────────────────────
 
     private void initialiserVues() {
         tilEmail                  = findViewById(R.id.tilEmail);
@@ -68,8 +63,14 @@ public class InscriptionActivity extends AppCompatActivity {
         });
     }
 
-    // ─── Validation ──────────────────────────────────────────────────────────
-
+    /**
+     * Valide les champs du formulaire d'inscription.
+     *
+     * @param email        L'adresse email saisie.
+     * @param motDePasse   Le mot de passe choisi.
+     * @param confirmation La confirmation du mot de passe.
+     * @return true si le formulaire est valide et prêt pour l'envoi.
+     */
     private boolean validerFormulaire(String email, String motDePasse,
                                       String confirmation) {
         tilEmail.setError(null);
@@ -101,8 +102,9 @@ public class InscriptionActivity extends AppCompatActivity {
         return valide;
     }
 
-    // ─── Inscription ─────────────────────────────────────────────────────────
-
+    /**
+     * Prépare et exécute la requête d'inscription vers l'API.
+     */
     private void tenterInscription() {
         String email        = texte(etEmail);
         String motDePasse   = texte(etMotDePasse);
@@ -156,12 +158,15 @@ public class InscriptionActivity extends AppCompatActivity {
         }
     }
 
-    // ─── Utilitaires ─────────────────────────────────────────────────────────
-
     private String texte(TextInputEditText champ) {
         return champ.getText() != null ? champ.getText().toString().trim() : "";
     }
 
+    /**
+     * Gère l'affichage des retours d'erreurs utilisateur.
+     *
+     * @param message Le message d'erreur à afficher dans le TextView dédié.
+     */
     private void afficherErreur(String message) {
         tvErreur.setText(message);
         tvErreur.setVisibility(View.VISIBLE);
@@ -171,6 +176,11 @@ public class InscriptionActivity extends AppCompatActivity {
         tvErreur.setVisibility(View.GONE);
     }
 
+    /**
+     * Contrôle l'état visuel du processus de soumission.
+     *
+     * @param visible true pour activer l'état de chargement.
+     */
     private void afficherChargement(boolean visible) {
         barreChargement.setVisibility(visible ? View.VISIBLE : View.GONE);
         btnInscription.setEnabled(!visible);
