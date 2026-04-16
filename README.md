@@ -1,27 +1,25 @@
-# 📱 Application Android + API Symfony --- Guide d'installation
+# 📱 Guide d'installation : Application Android & API Symfony
 
-Ce document explique comment installer et exécuter l'application Android
-ainsi que l'API Symfony sur un autre ordinateur.\
-Il couvre l'installation, la configuration, et le lancement du serveur
-API.
+Ce document détaille les étapes nécessaires pour installer et exécuter l'application Android 
+ainsi que son API Symfony sur un nouveau poste de travail. Il couvre l'installation des 
+dépendances, la configuration de l'environnement et le déploiement du serveur.
 
 ------------------------------------------------------------------------
 
 ## 🚀 Prérequis
 
-Assure-toi que le PC possède :
+Avant de commencer, assurez-vous que les outils suivants sont installés :
 
 ### ✔ Pour l'API Symfony
 
--   PHP 8.1 ou plus\
+-  PHP (version 8.1 ou supérieure)\
 -   Composer\
 -   Symfony CLI\
--   MySQL / MariaDB (si ton projet utilise une base de données)\
--   Extensions PHP nécessaires (pdo_mysql, etc.)
+-   MySQL ou MariaDB \
 
 ### ✔ Pour l'application Android
 
--   Android Studio (version récente)
+-   Android Studio (dernière version stable)
 -   SDK et outils Android configurés
 
 ------------------------------------------------------------------------
@@ -30,9 +28,11 @@ Assure-toi que le PC possède :
 
 ### 🔽 Cloner le projet
 
+Ouvrez un terminal et exécutez les commandes suivantes :
+
 ``` bash
-git clone https://github.com/TON_REPOSITORY/api-symfony.git
-cd api-symfony
+git clone https://github.com/mdeguil/Echappee.git
+cd Echappee/apiBackend
 ```
 
 ### 📦 Installer les dépendances
@@ -43,88 +43,65 @@ composer install
 
 ### ⚙️ Configurer l'environnement
 
-Créer un fichier `.env.local` :
+Créez un fichier nommé .env.local à la racine du projet pour y configurer votre base de données :
 
 ``` env
-DATABASE_URL="mysql://root:@127.0.0.1:3306/nom_de_ta_base"
+DATABASE_URL="mysql://USER:PASSWORD@127.0.0.1:3306/NOM_DE_BASE?serverVersion=8.0.32&charset=utf8mb4"
 ```
+
+(Remplacez USER, PASSWORD et NOM_DE_BASE par vos identifiants locaux).
 
 ### 🗃️ Créer la base et importer les données
 
+Exécutez ces commandes pour structurer la base et importer les données :
+
 ``` bash
 php bin/console doctrine:database:create
+php bin/console make:migration
 php bin/console doctrine:migrations:migrate
-```
-
-(Si tu as un fichier fixtures)
-
-``` bash
-php bin/console doctrine:fixtures:load
+php bin/console doctrine:fixture:load
+php bin/console app:importer-lieux
 ```
 
 ------------------------------------------------------------------------
 
 ## ▶️ 2. Lancer le serveur Symfony
 
-Utilise **impérativement cette commande** :
+Pour permettre à l'application Android de communiquer avec l'API, utilisez impérativement cette commande :
 
 ``` bash
-symfony server:start --allow-http --port=8000
+php -S 0.0.0.0:8000 -t public
 ```
 
-Le serveur sera disponible à l'adresse :
+L'API sera alors accessible à l'adresse suivante :
+👉 http://[VOTRE_ADRESSE_IP]:8000/api
 
-👉 http://localhost:8000
-
-Si ton API expose les joueurs via API Platform :
-
-👉 http://localhost:8000/api/joueurs
+Note : L'adresse IP correspond à celle de votre machine sur le réseau local. 
 
 ------------------------------------------------------------------------
 
-## 📱 3. Lancer l'application Android
+## 📱 3. Configuration de l'application Android
 
 ### 🔽 Importer le projet
 
-1.  Ouvrir **Android Studio**
-2.  `File > Open`
+1.  Lancez Android Studio.
+2.  Allez dans `File > Open`
 3.  Sélectionner le dossier du projet Android
 
 ### 🔧 Modifier l'URL de l'API si nécessaire
 
-Dans ton code, tu dois avoir une constante :
+Ouvrez le fichier `utils/ApiConfig.java` et mettez à jour la variable suivante :
 
 ``` java
-public static final String BASE_URL = "http://192.168.X.X:8000/api/";
+private static final String URL_PAR_DEFAUT = "http://[VOTRE_ADRESSE_IP]:8000";
 ```
 
-🔹 Adapter l'adresse IP selon le PC où tourne Symfony :
+(Remplacez [VOTRE_ADRESSE_IP] par l'adresse IP réelle de l'ordinateur hébergeant l'API).
 
--   Si l'application tourne sur un **émulateur**, utiliser :
+### ▶️ Exécution
 
-        http://10.0.2.2:8000/api/
-
--   Si l'application tourne sur un **vrai téléphone**, utiliser l'IP
-    locale du PC, par exemple :
-
-        http://192.168.1.42:8000/api/
-
-### ▶️ Lancer l'application
-
--   Brancher un téléphone Android **ou** utiliser l'émulateur
--   Cliquer sur **Run ▶**
-
-------------------------------------------------------------------------
-
-## 🧪 4. Vérification rapide
-
-Tester si l'API répond :
-
-``` bash
-curl http://localhost:8000/api/joueurs
-```
-
-Si tu vois une liste JSON → tout fonctionne.
+-   Connectez un appareil Android physique ou lancez un émulateur.
+-   Cliquez sur le bouton **Run ▶** (Exécuter).
 
 ------------------------------------------------------------------------
 
@@ -132,22 +109,17 @@ Si tu vois une liste JSON → tout fonctionne.
 
 ### ❌ L'application n'arrive pas à contacter l'API ?
 
-✔ Vérifier le firewall\
-✔ Vérifier l'IP utilisée dans Android\
-✔ Vérifier que Symfony est bien lancé sur **port 8000**\
-✔ Tester l'API depuis un navigateur mobile
-
-### ❌ "Network On Main Thread" ou crash ?
-
-Assure-toi d'utiliser Volley/Retrofit (ce que tu fais déjà).
+✔ **Pare-feu :** Vérifiez que votre pare-feu autorise les connexions entrantes sur le port 8000.\
+✔ **Adresse IP :** Assurez-vous que l'IP saisie dans `ApiConfig.java` est correcte.\
+✔ **Statut du serveur :** Confirmez que le serveur Symfony est actif et tourne bien sur le **port 8000**.\
+✔ **Test réseau :** Essayez d'accéder à l'URL de l'API via le navigateur du téléphone ou de l'émulateur.
 
 ------------------------------------------------------------------------
 
 ## ✔️ Conclusion
 
-Avec ces étapes, n'importe qui peut :
+En suivant cette procédure, vous disposez désormais d'un environnement fonctionnel :
 
--   installer ton API Symfony\
--   la lancer sur le port 8000\
--   lancer ton application Android\
--   s'y connecter sans problème
+-   L'API Symfony est opérationnelle.\
+-   La base de données est initialisée.\
+-   L'application Android est configurée pour communiquer avec le backend de manière fluide.
