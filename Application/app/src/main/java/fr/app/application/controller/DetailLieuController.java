@@ -1,5 +1,7 @@
 package fr.app.application.controller;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -8,9 +10,16 @@ import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
 
 import fr.app.application.model.DetailLieux;
-import fr.app.application.utils.ApiConfig;
+import fr.app.application.model.ReponseDetailLieux;
 import fr.app.application.utils.VolleyUtils;
 
+/**
+ * Controller qui récupère le détail d'un lieu depuis l'API.
+ *
+ * Endpoint attendu : GET /api/detail_lieus/{id}
+ * Réponse attendue : { "data": { "id": 1, "description": "...", "horaires": "...",
+ *                                "tarif": 12, "accessibilite": "...", "photos": "url" } }
+ */
 public class DetailLieuController {
 
     private static final String TAG = "DetailLieuController";
@@ -33,8 +42,11 @@ public class DetailLieuController {
     }
 
     /**
+     * Récupère les détails d'un lieu par son identifiant.
      * Récupère les détails spécifiques d'un lieu via une requête GET.
      *
+     * @param id       identifiant du lieu (provient de Lieu.getId())
+     * @param callback résultat ou erreur
      * @param id       L'identifiant unique du détail à récupérer (lié à l'entité Lieu).
      * @param callback L'interface de rappel pour traiter le résultat ou l'erreur.
      */
@@ -63,4 +75,5 @@ public class DetailLieuController {
 
         VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
+
 }

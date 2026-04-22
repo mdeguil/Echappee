@@ -1,4 +1,4 @@
-package fr.app.application.view.connexion;
+package fr.app.application.view;
 
 import android.content.Intent;
 import android.content.SharedPreferences;

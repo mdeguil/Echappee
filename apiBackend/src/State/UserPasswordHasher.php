@@ -19,11 +19,13 @@ class UserPasswordHasher implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         if ($data instanceof Utilisateur && $data->getPassword()) {
+            // On hache le mot de passe
             $data->setPassword(
                 $this->passwordHasher->hashPassword($data, $data->getPassword())
             );
         }
 
+        // On passe la main au processeur de Doctrine pour enregistrer en base
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
     }
 }

@@ -123,6 +123,172 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- ════════════════════════════════════════════════════════
+                 SECTION : Météo du jour  ☀️
+            ════════════════════════════════════════════════════════ -->
+            <LinearLayout
+                android:id="@+id/sectionMeteo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <!-- En-tête de section -->
+                <LinearLayout
+                    style="@style/SectionHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:contentDescription="Météo"
+                        app:tint="?attr/colorPrimary"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Météo du jour"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorPrimary" />
+
+                </LinearLayout>
+
+                <!-- Card météo -->
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/SectionCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="12dp"
+                        android:gravity="center_vertical">
+
+                        <!-- Icône météo -->
+                        <ImageView
+                            android:id="@+id/imgMeteoIcone"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:contentDescription="Icône météo"
+                            android:scaleType="fitCenter"
+                            tools:src="@android:drawable/ic_menu_gallery" />
+
+                        <!-- Infos textuelles -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="8dp">
+
+                            <!-- Description + température -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_marginBottom="4dp">
+
+                                <TextView
+                                    android:id="@+id/tvMeteoDescription"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textAppearance="?attr/textAppearanceBodyLarge"
+                                    android:textColor="?attr/colorOnSurface"
+                                    android:textStyle="bold"
+                                    android:capitalize="sentences"
+                                    tools:text="Ciel dégagé" />
+
+                                <TextView
+                                    android:id="@+id/tvMeteoTemperature"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                                    android:textColor="?attr/colorPrimary"
+                                    android:textStyle="bold"
+                                    tools:text="18 °C" />
+
+                            </LinearLayout>
+
+                            <!-- Ressenti -->
+                            <TextView
+                                android:id="@+id/tvMeteoRessenti"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textAppearance="?attr/textAppearanceBodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant"
+                                android:layout_marginBottom="6dp"
+                                tools:text="Ressenti : 16 °C" />
+
+                            <!-- Ligne humidité + vent -->
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/tvMeteoHumidite"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textAppearance="?attr/textAppearanceBodySmall"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    tools:text="💧 Humidité : 64 %" />
+
+                                <TextView
+                                    android:id="@+id/tvMeteoVent"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textAppearance="?attr/textAppearanceBodySmall"
+                                    android:textColor="?attr/colorOnSurfaceVariant"
+                                    tools:text="🌬 Vent : 3.6 m/s" />
+
+                            </LinearLayout>
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- ProgressBar météo (chargement) -->
+                <ProgressBar
+                    android:id="@+id/progressBarMeteo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="8dp"
+                    android:visibility="gone"
+                    tools:visibility="gone" />
+
+                <!-- Message d'erreur météo -->
+                <TextView
+                    android:id="@+id/tvErreurMeteo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="?attr/colorError"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:visibility="gone"
+                    tools:text="Météo indisponible"
+                    tools:visibility="gone" />
+
+                <View style="@style/SectionDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp" />
+
+            </LinearLayout>
+
             <!-- ── ProgressBar (chargement des détails API) ────────────── -->
             <ProgressBar
                 android:id="@+id/progressBarDetail"
@@ -188,7 +354,7 @@
                         android:textAppearance="?attr/textAppearanceBodyMedium"
                         android:textColor="?attr/colorOnSurfaceVariant"
                         android:lineSpacingMultiplier="1.5"
-                        tools:text="Un monument emblématique au cœur de Paris." />
+                        tools:text="Une description complète du lieu touristique." />
                 </com.google.android.material.card.MaterialCardView>
 
                 <View style="@style/SectionDivider"
@@ -221,7 +387,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Horaires d'ouverture"
+                        android:text="Horaires"
                         android:textAppearance="?attr/textAppearanceTitleMedium"
                         android:textColor="?attr/colorPrimary" />
                 </LinearLayout>

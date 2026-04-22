@@ -71,10 +71,9 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
 
         titulaire.itemView.setOnClickListener(v -> ecouteurClic.onClic(lieu));
 
+        // Clic sur le bouton "Détails" → ouvrir DetailLieuActivity
         titulaire.btnDetails.setOnClickListener(v -> {
-            Intent intent = new Intent(contexte, DetailLieuActivity.class);
-            intent.putExtra(DetailLieuActivity.EXTRA_ID,        lieu.getId());
-            contexte.startActivity(intent);
+            contexte.startActivity(DetailLieuActivity.creerIntent(contexte, lieu));
         });
     }
 
@@ -82,7 +81,8 @@ public class LieuAdapter extends RecyclerView.Adapter<LieuAdapter.LieuViewHolder
     public int getItemCount() { return listeLieux != null ? listeLieux.size() : 0; }
 
     public void mettreAJourListe(List<Lieu> nouveauxLieux) {
-        this.listeLieux = nouveauxLieux;
+        this.listeLieux.clear();
+        this.listeLieux.addAll(nouveauxLieux);
         notifyDataSetChanged();
     }
     static class LieuViewHolder extends RecyclerView.ViewHolder {
