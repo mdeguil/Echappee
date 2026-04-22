@@ -60,6 +60,18 @@
                 android:textSize="13sp"
                 android:textColor="#F5A623" />
 
+            <!-- Bouton Détails -->
+            <Button
+                android:id="@+id/btnDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Détails"
+                android:textSize="12sp"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="4dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
         </LinearLayout>
     </LinearLayout>
 
