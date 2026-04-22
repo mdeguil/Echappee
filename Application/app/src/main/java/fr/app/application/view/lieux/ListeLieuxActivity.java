@@ -4,7 +4,10 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -90,6 +93,17 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         if (fragmentCarte != null) {
             fragmentCarte.getMapAsync(this);
         }
+
+        EditText champRecherche = findViewById(R.id.champRecherche);
+        champRecherche.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                filtrerLieux(s.toString());
+            }
+        });
     }
 
     private void filtrerLieux(String texte) {
@@ -225,6 +239,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
                         if (nouveauxLieux != null) {
                             for (Lieu lieu : nouveauxLieux) {
                                 listeLieux.add(lieu);
+                                listeLieuxComplete.add(lieu);
                                 ajouterMarqueurSurCarte(lieu);
                             }
                             adaptateur.notifyDataSetChanged();
