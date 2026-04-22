@@ -98,6 +98,14 @@ private static final String URL_PAR_DEFAUT = "http://[VOTRE_ADRESSE_IP]:8000";
 
 (Remplacez [VOTRE_ADRESSE_IP] par l'adresse IP réelle de l'ordinateur hébergeant l'API).
 
+### 🔧 Ajouter la clé API pour la météo
+
+Ouvrez le fichier `local.properties` et ajouter la ligne suivante :
+
+``` java
+OPENWEATHER_API_KEY=[CLE_API_OPENWEATHERMAP]
+```
+
 ### ▶️ Exécution
 
 -   Connectez un appareil Android physique ou lancez un émulateur.
