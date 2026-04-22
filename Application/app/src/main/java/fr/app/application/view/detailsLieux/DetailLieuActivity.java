@@ -20,18 +20,39 @@ import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.chip.Chip;
 
+import java.util.Locale;
+
 import fr.app.application.R;
 import fr.app.application.controller.DetailLieuController;
+import fr.app.application.controller.MeteoController;
 import fr.app.application.model.DetailLieux;
 import fr.app.application.model.Lieu;
+import fr.app.application.model.Meteo;
 
+/**
+ * Affiche le détail complet d'un lieu touristique.
+ *
+ * Données transmises par Intent (depuis ListeLieuxActivity) :
+ *   - id, nom, photo principale, catégorie, note, latitude, longitude
+ *
+ * Données chargées depuis l'API détail (GET /api/lieux/{id}) :
+ *   - description, horaires, tarif, accessibilite, photos
+ *
+ * Données chargées depuis OpenWeather (GET /onecall/timemachine) :
+ *   - température, ressenti, humidité, vent, description, icône
+ */
 public class DetailLieuActivity extends AppCompatActivity {
 
+    // ── Clés des extras ───────────────────────────────────────────────────
     public static final String EXTRA_ID        = "extra_id";
     public static final String EXTRA_NOM       = "extra_nom";
     public static final String EXTRA_PHOTO     = "extra_photo";
     public static final String EXTRA_CATEGORIE = "extra_categorie";
     public static final String EXTRA_NOTE      = "extra_note";
+    public static final String EXTRA_LATITUDE  = "extra_latitude";   // ← nouveau
+    public static final String EXTRA_LONGITUDE = "extra_longitude";  // ← nouveau
+
+    // ── Vues détail ───────────────────────────────────────────────────────
     private ImageView    imgPhoto;
     private TextView     tvNom;
     private Chip         chipCategorie;
@@ -39,17 +60,38 @@ public class DetailLieuActivity extends AppCompatActivity {
     private TextView     tvNote;
     private ProgressBar  progressBar;
     private TextView     tvErreurDetail;
+
     private View         sectionDescription;
     private TextView     tvDescription;
+
     private View         sectionHoraires;
     private TextView     tvHoraires;
+
     private View         sectionTarifs;
     private TextView     tvTarifs;
+
     private View         sectionAccessibilite;
     private TextView     tvAccessibilite;
+
     private View         sectionPhotos;
     private LinearLayout galeriePhotos;
+
+    // ── Vues météo ────────────────────────────────────────────────────────
+    private View        sectionMeteo;
+    private ImageView   imgMeteoIcone;
+    private TextView    tvMeteoDescription;
+    private TextView    tvMeteoTemperature;
+    private TextView    tvMeteoRessenti;
+    private TextView    tvMeteoHumidite;
+    private TextView    tvMeteoVent;
+    private ProgressBar progressBarMeteo;
+    private TextView    tvErreurMeteo;
+
+    // ── Controllers ───────────────────────────────────────────────────────
     private DetailLieuController controleurDetail;
+    private MeteoController      controleurMeteo;
+
+    // ── Cycle de vie ──────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,9 +108,11 @@ public class DetailLieuActivity extends AppCompatActivity {
         initVues();
         afficherDonneesBase();
         chargerDetail();
+        chargerMeteo();   // ← appel météo
     }
 
     private void initVues() {
+        // Vues existantes
         imgPhoto             = findViewById(R.id.imgPhotoDetail);
         tvNom                = findViewById(R.id.tvNomDetail);
         chipCategorie        = findViewById(R.id.chipCategorieDetail);
@@ -92,8 +136,23 @@ public class DetailLieuActivity extends AppCompatActivity {
         sectionPhotos        = findViewById(R.id.sectionPhotos);
         galeriePhotos        = findViewById(R.id.galeriePhotos);
 
+        // Vues météo
+        sectionMeteo         = findViewById(R.id.sectionMeteo);
+        imgMeteoIcone        = findViewById(R.id.imgMeteoIcone);
+        tvMeteoDescription   = findViewById(R.id.tvMeteoDescription);
+        tvMeteoTemperature   = findViewById(R.id.tvMeteoTemperature);
+        tvMeteoRessenti      = findViewById(R.id.tvMeteoRessenti);
+        tvMeteoHumidite      = findViewById(R.id.tvMeteoHumidite);
+        tvMeteoVent          = findViewById(R.id.tvMeteoVent);
+        progressBarMeteo     = findViewById(R.id.progressBarMeteo);
+        tvErreurMeteo        = findViewById(R.id.tvErreurMeteo);
+
+        // Controllers
         controleurDetail     = new DetailLieuController(this);
+        controleurMeteo      = new MeteoController(this);
     }
+
+    // ── Données de base (Intent) ──────────────────────────────────────────
 
     private void afficherDonneesBase() {
         Intent i = getIntent();
@@ -116,6 +175,8 @@ public class DetailLieuActivity extends AppCompatActivity {
             tvNote.setText("Non noté");
         }
     }
+
+    // ── Chargement du détail via API ──────────────────────────────────────
 
     private void chargerDetail() {
         int id = getIntent().getIntExtra(EXTRA_ID, -1);
@@ -151,7 +212,7 @@ public class DetailLieuActivity extends AppCompatActivity {
         // Horaires
         afficherSection(sectionHoraires, tvHoraires, detail.getHoraires());
 
-        // Tarif (Integer → "X €", masqué si null)
+        // Tarif
         if (detail.getTarif() != 0) {
             tvTarifs.setText(detail.getTarif() + " €");
             sectionTarifs.setVisibility(View.VISIBLE);
@@ -163,7 +224,7 @@ public class DetailLieuActivity extends AppCompatActivity {
         // Accessibilité
         afficherSection(sectionAccessibilite, tvAccessibilite, detail.getAccessibilite());
 
-        // Photo supplémentaire (String = une URL unique)
+        // Photo supplémentaire
         String photoSupp = detail.getPhotos();
         if (photoSupp != null && !photoSupp.trim().isEmpty()) {
             ajouterPhotoGalerie(photoSupp.trim());
@@ -172,6 +233,91 @@ public class DetailLieuActivity extends AppCompatActivity {
             sectionPhotos.setVisibility(View.GONE);
         }
     }
+
+    // ── Chargement et affichage de la météo ───────────────────────────────
+
+    private void chargerMeteo() {
+        Intent i         = getIntent();
+        double latitude  = i.getDoubleExtra(EXTRA_LATITUDE,  Double.MAX_VALUE);
+        double longitude = i.getDoubleExtra(EXTRA_LONGITUDE, Double.MAX_VALUE);
+
+        // Si les coordonnées ne sont pas disponibles, on masque la section
+        if (latitude == Double.MAX_VALUE || longitude == Double.MAX_VALUE) {
+            sectionMeteo.setVisibility(View.GONE);
+            return;
+        }
+
+        // Afficher la section et le loader
+        sectionMeteo.setVisibility(View.VISIBLE);
+        progressBarMeteo.setVisibility(View.VISIBLE);
+        tvErreurMeteo.setVisibility(View.GONE);
+
+        // Masquer la card le temps du chargement
+        imgMeteoIcone.setVisibility(View.INVISIBLE);
+        tvMeteoDescription.setVisibility(View.INVISIBLE);
+        tvMeteoTemperature.setVisibility(View.INVISIBLE);
+        tvMeteoRessenti.setVisibility(View.INVISIBLE);
+        tvMeteoHumidite.setVisibility(View.INVISIBLE);
+        tvMeteoVent.setVisibility(View.INVISIBLE);
+
+        controleurMeteo.recupererMeteo(latitude, longitude, new MeteoController.CallbackMeteo() {
+            @Override
+            public void onSucces(Meteo meteo) {
+                progressBarMeteo.setVisibility(View.GONE);
+                afficherMeteo(meteo);
+            }
+
+            @Override
+            public void onErreur(String messageErreur) {
+                progressBarMeteo.setVisibility(View.GONE);
+                tvErreurMeteo.setText("Météo indisponible");
+                tvErreurMeteo.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private void afficherMeteo(Meteo meteo) {
+        Meteo.DataPoint point = meteo.getPremierPoint();
+        if (point == null) return;
+
+        // Température et ressenti (arrondi à l'entier)
+        int tempC     = (int) Math.round(point.getTemp());
+        int ressentiC = (int) Math.round(point.getFeelsLike());
+
+        tvMeteoTemperature.setText(tempC + " °C");
+        tvMeteoRessenti.setText("Ressenti : " + ressentiC + " °C");
+        tvMeteoHumidite.setText("💧 Humidité : " + point.getHumidity() + " %");
+        tvMeteoVent.setText(String.format(Locale.getDefault(),
+                "🌬 Vent : %.1f m/s", point.getWindSpeed()));
+
+        // Description de la condition
+        Meteo.WeatherCondition condition = point.getConditionPrincipale();
+        if (condition != null) {
+            // Première lettre en majuscule
+            String desc = condition.getDescription();
+            if (desc != null && !desc.isEmpty()) {
+                desc = desc.substring(0, 1).toUpperCase(Locale.FRENCH) + desc.substring(1);
+            }
+            tvMeteoDescription.setText(desc);
+
+            // Icône météo via Glide
+            Glide.with(this)
+                    .load(condition.getIconUrl())
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .error(android.R.drawable.ic_menu_gallery)
+                    .into(imgMeteoIcone);
+        }
+
+        // Rendre toutes les vues visibles
+        imgMeteoIcone.setVisibility(View.VISIBLE);
+        tvMeteoDescription.setVisibility(View.VISIBLE);
+        tvMeteoTemperature.setVisibility(View.VISIBLE);
+        tvMeteoRessenti.setVisibility(View.VISIBLE);
+        tvMeteoHumidite.setVisibility(View.VISIBLE);
+        tvMeteoVent.setVisibility(View.VISIBLE);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
 
     private void afficherSection(View section, TextView textView, String valeur) {
         if (valeur != null && !valeur.trim().isEmpty()) {
@@ -223,6 +369,12 @@ public class DetailLieuActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // ── Factory method ────────────────────────────────────────────────────
+
+    /**
+     * Crée l'Intent avec toutes les données nécessaires, y compris les coordonnées
+     * GPS pour l'appel météo.
+     */
     public static Intent creerIntent(Context contexte, Lieu lieu) {
         Intent intent = new Intent(contexte, DetailLieuActivity.class);
         intent.putExtra(EXTRA_ID,        lieu.getId());
@@ -231,6 +383,13 @@ public class DetailLieuActivity extends AppCompatActivity {
         intent.putExtra(EXTRA_CATEGORIE, lieu.getCategorie());
         if (lieu.getNoteMoyen() != null) {
             intent.putExtra(EXTRA_NOTE, (int) lieu.getNoteMoyen());
+        }
+        // Coordonnées pour la météo
+        if (lieu.getLatitude() != null) {
+            intent.putExtra(EXTRA_LATITUDE,  lieu.getLatitude());
+        }
+        if (lieu.getLongitude() != null) {
+            intent.putExtra(EXTRA_LONGITUDE, lieu.getLongitude());
         }
         return intent;
     }

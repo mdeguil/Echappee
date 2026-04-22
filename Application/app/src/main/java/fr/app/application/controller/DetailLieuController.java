@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 
 import fr.app.application.model.DetailLieux;
 import fr.app.application.model.ReponseDetailLieux;
+import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
 
 /**

@@ -27,6 +27,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.gson.Gson;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +52,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private LieuAdapter adaptateur;
     private ProgressBar barreChargement;
     private List<Lieu>  listeLieux = new ArrayList<>();
+    private List<Lieu> listeLieuxComplete = new ArrayList<>();
 
     private MaterialButton btnCreerItineraire, btnVoirItineraires;
 
@@ -88,6 +90,89 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         if (fragmentCarte != null) {
             fragmentCarte.getMapAsync(this);
         }
+    }
+
+    private void filtrerLieux(String texte) {
+        List<Lieu> resultat = new ArrayList<>();
+
+        if (texte.trim().isEmpty()) {
+            resultat.addAll(listeLieuxComplete);
+        } else {
+            String recherche = texte.toLowerCase().trim();
+            for (Lieu lieu : listeLieuxComplete) {
+                if (corresponde(lieu, recherche)) {
+                    resultat.add(lieu);
+                }
+            }
+        }
+
+        adaptateur.mettreAJourListe(resultat);
+    }
+
+    /**
+     * Vérifie si le lieu correspond à la recherche.
+     * Recherche dans le nom ET la catégorie, avec tolérance aux fautes.
+     */
+    private boolean corresponde(Lieu lieu, String recherche) {
+        String nom       = lieu.getNom()       != null ? lieu.getNom().toLowerCase()       : "";
+        String categorie = lieu.getCategorie() != null ? lieu.getCategorie().toLowerCase() : "";
+
+        // Correspondance exacte (contient)
+        if (nom.contains(recherche) || categorie.contains(recherche)) {
+            return true;
+        }
+
+        // Correspondance approximative mot par mot
+        String[] mots = recherche.split("\\s+");
+        for (String mot : mots) {
+            if (mot.length() < 3) continue; // ignore les mots trop courts
+            if (contiendApproximativement(nom, mot) || contiendApproximativement(categorie, mot)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Vérifie si le texte contient un mot approchant via distance de Levenshtein.
+     * Tolère 1 faute pour les mots de 4-6 lettres, 2 fautes au-delà.
+     */
+    private boolean contiendApproximativement(String texte, String mot) {
+        String[] motsTexte = texte.split("\\s+");
+        int tolerance = mot.length() <= 6 ? 1 : 2;
+
+        for (String motTexte : motsTexte) {
+            if (distanceLevenshtein(motTexte, mot) <= tolerance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Calcule la distance de Levenshtein entre deux chaînes.
+     * (nombre minimal d'insertions, suppressions, substitutions pour passer de a à b)
+     */
+    private int distanceLevenshtein(String a, String b) {
+        int[] prev = new int[b.length() + 1];
+        int[] curr = new int[b.length() + 1];
+
+        for (int j = 0; j <= b.length(); j++) prev[j] = j;
+
+        for (int i = 1; i <= a.length(); i++) {
+            curr[0] = i;
+            for (int j = 1; j <= b.length(); j++) {
+                if (a.charAt(i - 1) == b.charAt(j - 1)) {
+                    curr[j] = prev[j - 1];
+                } else {
+                    curr[j] = 1 + Math.min(prev[j - 1], Math.min(prev[j], curr[j - 1]));
+                }
+            }
+            int[] temp = prev; prev = curr; curr = temp;
+        }
+
+        return prev[b.length()];
     }
 
     /**
