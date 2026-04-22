@@ -22,13 +22,15 @@ import fr.app.application.utils.VolleyUtils;
  */
 public class DetailLieuController {
 
-    // Même base URL que LieuController
-    private static final String URL_BASE  = "http://10.98.175.102:8000";
-    private static final String URL_DETAILLIEUX = URL_BASE + "/api/detail_lieus/";
+    private static final String TAG = "DetailLieuController";
+    private static final String ENDPOINT_DETAIL = "/api/detail_lieus/";
 
     private final Context contexte;
     private final Gson    gson;
 
+    /**
+     * Interface de rappel pour la réception des données détaillées d'un lieu.
+     */
     public interface CallbackDetail {
         void onSucces(DetailLieux detail);
         void onErreur(String messageErreur);
@@ -41,12 +43,16 @@ public class DetailLieuController {
 
     /**
      * Récupère les détails d'un lieu par son identifiant.
+     * Récupère les détails spécifiques d'un lieu via une requête GET.
      *
      * @param id       identifiant du lieu (provient de Lieu.getId())
      * @param callback résultat ou erreur
+     * @param id       L'identifiant unique du détail à récupérer (lié à l'entité Lieu).
+     * @param callback L'interface de rappel pour traiter le résultat ou l'erreur.
      */
     public void recupererDetail(int id, CallbackDetail callback) {
-        String url = URL_DETAILLIEUX + id;
+        // L'URL de base est toujours lue depuis le singleton
+        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_DETAIL) + id;
 
         StringRequest requete = new StringRequest(
                 Request.Method.GET,
@@ -60,6 +66,7 @@ public class DetailLieuController {
                             callback.onErreur("Détail introuvable pour l'id " + id);
                         }
                     } catch (Exception e) {
+                        Log.e(TAG, "Erreur de parsing", e);
                         callback.onErreur("Erreur de parsing : " + e.getMessage());
                     }
                 },

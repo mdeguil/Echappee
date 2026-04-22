@@ -2,12 +2,33 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use App\Dto\ItineraireInput;
+use App\Dto\ItineraireOutput;
 use App\Repository\ItiniraireRepository;
+use App\State\Processor\ItineraireProcessor;
+use App\State\Provider\ItiniraireProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ItiniraireRepository::class)]
+#[ApiResource(
+    operations: [
+        new GetCollection(
+            provider: ItiniraireProvider::class,
+        ),
+        new Post(
+            input:     ItineraireInput::class,
+            output:    ItineraireOutput::class,
+            processor: ItineraireProcessor::class,
+        ),
+        new Delete(),
+    ]
+)]
 class Itiniraire
 {
     #[ORM\Id]
@@ -21,7 +42,7 @@ class Itiniraire
     /**
      * @var Collection<int, ListeLieux>
      */
-    #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire')]
+    #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire', cascade: ['persist'])]
     private Collection $listeLieux;
 
     /**

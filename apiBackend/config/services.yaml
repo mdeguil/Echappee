@@ -24,5 +24,10 @@ services:
             $depotDetailLieu: '@App\Repository\DetailLieuRepository'
         tags: ['api_platform.state_provider']
 
+    App\State\Provider\DetailLieuListeProvider:
+        arguments:
+            $depotDetailLieu: '@App\Repository\DetailLieuRepository'
+        tags: ['api_platform.state_provider']
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

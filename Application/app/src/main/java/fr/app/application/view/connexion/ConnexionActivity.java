@@ -22,18 +22,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 import fr.app.application.R;
+import fr.app.application.utils.ApiConfig;
+import fr.app.application.view.inscription.InscriptionActivity;
+import fr.app.application.view.lieux.ListeLieuxActivity;
 
 public class ConnexionActivity extends AppCompatActivity {
 
-    // ⚠️ Remplacez par l'URL de votre API Symfony
-    private static final String API_BASE_URL = "http://10.98.175.102:8000";
     private static final String LOGIN_ENDPOINT = "/api/login_check";
 
-    private TextInputLayout tilEmail, tilPassword;
-    private TextInputEditText etEmail, etPassword;
-    private MaterialButton btnLogin, btnRegister;
-    private ProgressBar progressBar;
-    private TextView tvError;
+    private TextInputLayout    tilEmail, tilPassword;
+    private TextInputEditText  etEmail, etPassword;
+    private MaterialButton     btnLogin, btnRegister;
+    private ProgressBar        progressBar;
+    private TextView           tvError;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +72,13 @@ public class ConnexionActivity extends AppCompatActivity {
         });
     }
 
-    /** Validation locale avant envoi */
+    /**
+     * Valide la conformité des saisies utilisateur avant l'envoi à l'API.
+     *
+     * @param email L'adresse email saisie.
+     * @param mdp   Le mot de passe saisi.
+     * @return true si toutes les conditions de validation sont remplies.
+     */
     private boolean validateInputs(String email, String mdp) {
         boolean valid = true;
         tilEmail.setError(null);
@@ -97,17 +104,25 @@ public class ConnexionActivity extends AppCompatActivity {
         return valid;
     }
 
-    /** Appel API Symfony /api/login_check (LexikJWT) */
+    /**
+     * Exécute la requête d'authentification vers l'API.
+     *
+     * @param email L'identifiant utilisateur.
+     * @param mdp   Le mot de passe associé.
+     */
     private void login(String email, String mdp) {
         setLoading(true);
 
+        // L'URL de base est lue depuis le singleton au moment de l'appel
+        String loginUrl = ApiConfig.getInstance(this).getUrl(LOGIN_ENDPOINT);
+
         new Thread(() -> {
-            String result = null;
-            String errorMsg = null;
-            int responseCode = 0;
+            String result     = null;
+            String errorMsg   = null;
+            int    responseCode = 0;
 
             try {
-                URL url = new URL(API_BASE_URL + LOGIN_ENDPOINT);
+                URL url = new URL(loginUrl);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
@@ -116,8 +131,6 @@ public class ConnexionActivity extends AppCompatActivity {
                 conn.setConnectTimeout(10000);
                 conn.setReadTimeout(10000);
 
-                // Corps JSON : {"username": "...", "password": "..."}
-                // Symfony LexikJWT attend "username" par défaut (= votre champ mail)
                 JSONObject body = new JSONObject();
                 body.put("email", email);
                 body.put("password", mdp);
@@ -148,9 +161,9 @@ public class ConnexionActivity extends AppCompatActivity {
                 errorMsg = "Erreur réseau : " + e.getMessage();
             }
 
-            final String finalResult   = result;
-            final String finalError    = errorMsg;
-            final int    finalCode     = responseCode;
+            final String finalResult = result;
+            final String finalError  = errorMsg;
+            final int    finalCode   = responseCode;
 
             runOnUiThread(() -> {
                 setLoading(false);
@@ -160,21 +173,24 @@ public class ConnexionActivity extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * Analyse la réponse HTTP retournée par le serveur.
+     * * En cas de code 200 (OK), extrait le jeton JWT du JSON.
+     * Gère les erreurs spécifiques comme le code 401 (identifiants invalides)
+     * ou les erreurs de formatage JSON.
+     *
+     * @param code     Le code de réponse HTTP.
+     * @param result   Le corps de la réponse en cas de succès.
+     * @param errorMsg Le message d'erreur en cas d'échec technique.
+     */
     private void handleLoginResponse(int code, String result, String errorMsg) {
         if (code == HttpURLConnection.HTTP_OK && result != null) {
             try {
-                // Nettoyage de la chaîne au cas où il y aurait des caractères parasites
                 String cleanResult = result.trim();
                 JSONObject json = new JSONObject(cleanResult);
 
                 if (json.has("token")) {
                     String token = json.getString("token");
-
-                    // Vérification que le token n'est pas juste le mot "string" de test
-                    if (token.equals("string")) {
-                        android.util.Log.w("AUTH", "Attention : Le serveur a renvoyé un token de test 'string'");
-                    }
-
                     saveToken(token);
                     navigateToMain();
                 } else {
@@ -193,16 +209,16 @@ public class ConnexionActivity extends AppCompatActivity {
         }
     }
 
-    /** Sauvegarde le JWT dans SharedPreferences */
+    /**
+     * Enregistre le jeton de sécurité de manière persistante.
+     * * Utilise les SharedPreferences pour conserver le jeton JWT, permettant
+     * ainsi d'authentifier les requêtes ultérieures vers l'API.
+     *
+     * @param token Le jeton JWT fourni par le serveur.
+     */
     private void saveToken(String token) {
         SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
         prefs.edit().putString("jwt_token", token).apply();
-    }
-
-    /** Vérifie si un token est déjà stocké */
-    private boolean isLoggedIn() {
-        SharedPreferences prefs = getSharedPreferences("auth", MODE_PRIVATE);
-        return prefs.getString("jwt_token", null) != null;
     }
 
     private void navigateToMain() {
@@ -215,6 +231,11 @@ public class ConnexionActivity extends AppCompatActivity {
         tvError.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Gère l'état visuel des composants pendant le chargement.
+     *
+     * @param loading true pour afficher l'état de chargement.
+     */
     private void setLoading(boolean loading) {
         btnLogin.setEnabled(!loading);
         progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);

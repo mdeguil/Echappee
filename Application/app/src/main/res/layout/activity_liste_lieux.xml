@@ -65,7 +65,7 @@
             android:padding="8dp"
             android:background="#F5F5F5">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCreerItineraire"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -73,7 +73,7 @@
                 android:layout_marginEnd="4dp"
                 android:text="Créer Itinéraire" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnVoirItineraires"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

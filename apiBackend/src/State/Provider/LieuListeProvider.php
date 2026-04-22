@@ -1,15 +1,12 @@
 <?php
 
-namespace App\State;
+namespace App\State\Provider;
 
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
-use App\Dto\LieuListeDto;
 use App\Repository\LieuRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-// php bin/console app:importer-lieux
-// php -S 0.0.0.0:8000 -t public
 
 final class LieuListeProvider implements ProviderInterface
 {
@@ -29,7 +26,6 @@ final class LieuListeProvider implements ProviderInterface
                 'noteMoyen'   => $lieu->getNoteMoyen(),
                 'latitude'    => $lieu->getLatitude(),
                 'longitude'   => $lieu->getLongitude(),
-                // On expose le nom de la catégorie, pas l'objet entier
                 'categorie'   => $lieu->getCategorie()?->getNom(),
                 'commentaire' => $lieu->getCommentaires()?->getMessage(),
             ],

@@ -2,20 +2,20 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use App\Dto\LieuListeDto;
+use App\Dto\LieuListe;
 use App\Repository\LieuRepository;
-use App\State\LieuListeProvider;
+use App\State\Provider\LieuListeProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LieuRepository::class)]
 #[ApiResource(
     operations: [
         new GetCollection(
-            output:   LieuListeDto::class,
+            output:   LieuListe::class,
             provider: LieuListeProvider::class,
         ),
     ],
