@@ -36,7 +36,7 @@
             android:value="AIzaSyAFFP_NkxnYZQ4rHVD0-nPq_iin_xodeXY" />
 
         <activity
-            android:name=".view.VisiteActivity"
+            android:name=".view.visite.VisiteActivity"
             android:parentActivityName=".view.itiniraires.DetailItineraireActivity" />
 
         <activity

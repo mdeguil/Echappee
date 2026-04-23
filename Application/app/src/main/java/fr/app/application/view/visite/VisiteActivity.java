@@ -1,4 +1,4 @@
-package fr.app.application.view;
+package fr.app.application.view.visite;
 
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
