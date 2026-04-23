@@ -46,4 +46,36 @@ public class Lieu {
     public Double getLongitude()  { return longitude; }
     public String getCategorie()  { return categorie; }
     public String getCommentaire(){ return commentaire; }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public void setNoteMoyen(Integer noteMoyen) {
+        this.noteMoyen = noteMoyen;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public void setCategorie(String categorie) {
+        this.categorie = categorie;
+    }
+
+    public void setCommentaire(String commentaire) {
+        this.commentaire = commentaire;
+    }
 }

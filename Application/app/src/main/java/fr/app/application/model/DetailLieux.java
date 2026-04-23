@@ -26,12 +26,16 @@ public class DetailLieux {
     @SerializedName("photos")
     private String photos;
 
-    // ── Getters ───────────────────────────────────────────────────────────
-
-    public int getId()            { return id; }
-    public String getDescription()        { return description; }
+    public int getId()               { return id; }
+    public void setId(int id)        { this.id = id; }
+    public String getDescription()   { return description; }
+    public void setDescription(String d){ this.description = d; }
     public String getHoraires()      { return horaires; }
-    public Integer getTarif() { return tarif; }
-    public String getAccessibilite()   { return accessibilite; }
-    public String getPhotos()  { return photos; }
+    public void setHoraires(String h){ this.horaires = h; }
+    public Integer getTarif()        { return tarif; }
+    public void setTarif(Integer t)  { this.tarif = t; }
+    public String getAccessibilite() { return accessibilite; }
+    public void setAccessibilite(String a){ this.accessibilite = a; }
+    public String getPhotos()        { return photos; }
+    public void setPhotos(String p)  { this.photos = p; }
 }

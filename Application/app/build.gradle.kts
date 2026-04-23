@@ -46,10 +46,6 @@ android {
     }
 }
 
-configurations.all {
-    exclude(group = "com.google.guava", module = "listenablefuture")
-}
-
 dependencies {
 
     implementation(libs.appcompat)
@@ -63,9 +59,9 @@ dependencies {
     implementation(libs.cardview)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
-    implementation(libs.compiler)
-    implementation(libs.room.guava)
+    annotationProcessor(libs.room.compiler)
     implementation(libs.room.runtime)
+    implementation(libs.concurrent.futures)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
