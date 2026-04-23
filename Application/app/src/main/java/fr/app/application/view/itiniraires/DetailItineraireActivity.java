@@ -1,5 +1,6 @@
 package fr.app.application.view.itiniraires;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -38,6 +39,7 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.model.Itineraire;
 import fr.app.application.utils.VolleyUtils;
+import fr.app.application.view.visite.VisiteActivity;
 
 public class DetailItineraireActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -243,7 +245,15 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
 
             boolean aCoordonnees = lieu.getLat() != null && lieu.getLng() != null;
             holder.btnJySuis.setEnabled(aCoordonnees);
-            holder.btnJySuis.setOnClickListener(v -> listener.onJySuis(position));
+            holder.btnJySuis.setOnClickListener(v ->{
+                listener.onJySuis(position);
+
+                Intent intent = new Intent(v.getContext(), VisiteActivity.class);
+                intent.putExtra(VisiteActivity.EXTRA_LIEU_ID,  lieu.getId());
+                intent.putExtra(VisiteActivity.EXTRA_LIEU_NOM, lieu.getNom());
+                v.getContext().startActivity(intent);
+            });
+
         }
 
         @Override
