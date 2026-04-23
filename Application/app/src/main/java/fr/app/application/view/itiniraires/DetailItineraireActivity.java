@@ -2,13 +2,18 @@ package fr.app.application.view.itiniraires;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -19,6 +24,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.gson.Gson;
@@ -40,7 +46,11 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
     private static final String ORS_API_KEY  = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjJlYjU0ZWNjMmEyYzQwOTliMTM4NDFmMzMzMTA2Yjc4IiwiaCI6Im11cm11cjY0In0=";
     private GoogleMap  carteMaps;
     private Itineraire itineraire;
-    private TextView    tvTitre;
+    private LieuxAdapter lieuxAdapter;
+
+    private final List<Marker> markers = new ArrayList<>();
+
+    private RecyclerView recyclerLieuxVisite;
     private TextView    tvDuree;
     private TextView    tvNbLieux;
     private TextView    tvDepartArrivee;
@@ -66,17 +76,22 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
     }
 
     private void initVues() {
-        tvTitre              = findViewById(R.id.tvDetailItineraireTitre);
         tvDuree              = findViewById(R.id.tvDetailItineraireDuree);
         tvNbLieux            = findViewById(R.id.tvDetailItineraireNbLieux);
         tvDepartArrivee      = findViewById(R.id.tvDetailItineraireDepartArrivee);
         barreChargementTrace = findViewById(R.id.barreChargementTrace);
         tvChargementTrace    = findViewById(R.id.tvChargementTrace);
+
+        recyclerLieuxVisite  = findViewById(R.id.recyclerLieuxVisite);
+
+        if (recyclerLieuxVisite != null) {
+            recyclerLieuxVisite.setLayoutManager(new LinearLayoutManager(this));
+            lieuxAdapter = new LieuxAdapter(new ArrayList<>(), this::centrerSurLieu);
+            recyclerLieuxVisite.setAdapter(lieuxAdapter);
+        }
     }
 
     private void remplirInfos() {
-        tvTitre.setText("Itinéraire #" + itineraire.getId());
-
         if (itineraire.getDureTotal() != null && itineraire.getDureTotal() > 0) {
             int heures  = itineraire.getDureTotal() / 60;
             int minutes = itineraire.getDureTotal() % 60;
@@ -94,14 +109,18 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
 
         if (lieux != null && !lieux.isEmpty()) {
-            String depart  = lieux.get(lieux.size() - 1).getNom();
-            String arrivee = lieux.get(0).getNom();
+            String depart  = lieux.get(0).getNom();
+            String arrivee = lieux.get(lieux.size() - 1).getNom();
             if (lieux.size() == 1) {
                 tvDepartArrivee.setText("📍 " + depart);
             } else {
                 tvDepartArrivee.setText("📍 " + depart + "  →  🏁 " + arrivee);
             }
         }
+
+        lieuxAdapter.lieux.clear();
+        lieuxAdapter.lieux.addAll(lieux);
+        lieuxAdapter.notifyDataSetChanged();
     }
 
     private void initCarte() {
@@ -167,6 +186,85 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             chargerTraceOSRM(lieux);
         }
     }
+
+    void centrerSurLieu(int index) {
+        if (carteMaps == null) return;
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
+        if (lieux == null || index >= lieux.size()) return;
+
+        Itineraire.LieuRef lieu = lieux.get(index);
+        if (lieu.getLat() == null || lieu.getLng() == null) return;
+
+        carteMaps.animateCamera(
+                CameraUpdateFactory.newLatLngZoom(new LatLng(lieu.getLat(), lieu.getLng()), 16f));
+
+        if (index < markers.size() && markers.get(index) != null) {
+            markers.get(index).showInfoWindow();
+        }
+    }
+
+    interface OnLieuClickListener {
+        void onJySuis(int index);
+    }
+
+    private static class LieuxAdapter extends RecyclerView.Adapter<LieuxAdapter.LieuViewHolder> {
+
+        private final List<Itineraire.LieuRef> lieux;
+        private final OnLieuClickListener      listener;
+
+        LieuxAdapter(List<Itineraire.LieuRef> lieux, OnLieuClickListener listener) {
+            this.lieux    = lieux;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public LieuViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_lieu_itineraire, parent, false);
+            return new LieuViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull LieuViewHolder holder, int position) {
+            Itineraire.LieuRef lieu = lieux.get(position);
+
+            String emoji;
+            if (position == 0 ) {
+                emoji = "🟢";
+            } else if (position == lieux.size() - 1) {
+                emoji = "🔴";
+            } else {
+                emoji = "🔵";
+            }
+
+            holder.tvNumero.setText(emoji + " " + (position + 1) + ".");
+            holder.tvNom.setText(lieu.getNom() != null ? lieu.getNom() : "—");
+
+            boolean aCoordonnees = lieu.getLat() != null && lieu.getLng() != null;
+            holder.btnJySuis.setEnabled(aCoordonnees);
+            holder.btnJySuis.setOnClickListener(v -> listener.onJySuis(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return lieux != null ? lieux.size() : 0;
+        }
+
+        static class LieuViewHolder extends RecyclerView.ViewHolder {
+            final TextView tvNumero;
+            final TextView tvNom;
+            final Button   btnJySuis;
+
+            LieuViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvNumero  = itemView.findViewById(R.id.tvLieuNumero);
+                tvNom     = itemView.findViewById(R.id.tvLieuNom);
+                btnJySuis = itemView.findViewById(R.id.btnLieuJySuis);
+            }
+        }
+    }
+
 
     private void chargerTraceOSRM(List<Itineraire.LieuRef> lieux) {
         barreChargementTrace.setVisibility(View.VISIBLE);
