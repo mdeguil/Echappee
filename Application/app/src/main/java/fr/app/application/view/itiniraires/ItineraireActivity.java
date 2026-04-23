@@ -15,7 +15,7 @@ import java.util.List;
 
 import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
-import fr.app.application.model.Itineraire;
+import fr.app.application.model.Itiniraire;
 import fr.app.application.view.adapter.ItineraireAdapter;
 
 public class ItineraireActivity extends AppCompatActivity {
@@ -26,7 +26,7 @@ public class ItineraireActivity extends AppCompatActivity {
     private ItineraireAdapter  adaptateur;
     private ItineraireController controleur;
 
-    private final List<Itineraire> listeItineraires = new ArrayList<>();
+    private final List<Itiniraire> listeItineraires = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +65,7 @@ public class ItineraireActivity extends AppCompatActivity {
 
         controleur.recupererItineraires(new ItineraireController.CallbackItineraires() {
             @Override
-            public void onSucces(List<Itineraire> itineraires) {
+            public void onSucces(List<Itiniraire> itineraires) {
                 barreChargement.setVisibility(View.GONE);
                 listeItineraires.clear();
                 listeItineraires.addAll(itineraires);
@@ -88,7 +88,7 @@ public class ItineraireActivity extends AppCompatActivity {
 
     // ── Suppression ───────────────────────────────────────────────────────
 
-    private void supprimerItineraire(Itineraire itineraire, int position) {
+    private void supprimerItineraire(Itiniraire itineraire, int position) {
         controleur.supprimerItineraire(itineraire.getId(),
                 new ItineraireController.CallbackSupprimer() {
                     @Override

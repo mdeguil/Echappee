@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import java.util.Arrays;
 import java.util.List;
 
-import fr.app.application.model.Itineraire;
+import fr.app.application.model.Itiniraire;
 import fr.app.application.model.reponse.ReponseItineraires;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.VolleyUtils;
@@ -26,12 +26,12 @@ public class ItineraireController {
     private final Gson    gson;
 
     public interface CallbackItineraires {
-        void onSucces(List<Itineraire> itineraires);
+        void onSucces(List<Itiniraire> itineraires);
         void onErreur(String messageErreur);
     }
 
     public interface CallbackCreerItineraire {
-        void onSucces(Itineraire itineraire);
+        void onSucces(Itiniraire itineraire);
         void onErreur(String messageErreur);
     }
 
@@ -61,7 +61,7 @@ public class ItineraireController {
                         if (reponse2 != null && reponse2.getData() != null) {
                             callback.onSucces(reponse2.getData());
                         } else {
-                            Itineraire[] tableau = gson.fromJson(reponse, Itineraire[].class);
+                            Itiniraire[] tableau = gson.fromJson(reponse, Itiniraire[].class);
                             if (tableau != null) {
                                 callback.onSucces(Arrays.asList(tableau));
                             } else {
@@ -100,7 +100,7 @@ public class ItineraireController {
                     body,
                     reponse -> {
                         try {
-                            Itineraire itineraire = gson.fromJson(reponse.toString(), Itineraire.class);
+                            Itiniraire itineraire = gson.fromJson(reponse.toString(), Itiniraire.class);
                             callback.onSucces(itineraire);
                         } catch (Exception e) {
                             callback.onErreur("Erreur de parsing : " + e.getMessage());

@@ -17,21 +17,21 @@ import com.google.gson.Gson;
 import java.util.List;
 
 import fr.app.application.R;
-import fr.app.application.model.Itineraire;
+import fr.app.application.model.Itiniraire;
 import fr.app.application.view.itiniraires.DetailItineraireActivity;
 
 public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.ViewHolder> {
 
     public interface OnSupprimerListener {
-        void onSupprimer(Itineraire itineraire, int position);
+        void onSupprimer(Itiniraire itineraire, int position);
     }
 
     private final Context              contexte;
-    private final List<Itineraire>     itineraires;
+    private final List<Itiniraire>     itineraires;
     private final OnSupprimerListener  onSupprimer;
 
     public ItineraireAdapter(Context contexte,
-                             List<Itineraire> itineraires,
+                             List<Itiniraire> itineraires,
                              OnSupprimerListener onSupprimer) {
         this.contexte     = contexte;
         this.itineraires  = itineraires;
@@ -48,8 +48,8 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Itineraire itineraire = itineraires.get(position);
-        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
+        Itiniraire itineraire = itineraires.get(position);
+        List<Itiniraire.LieuRef> lieux = itineraire.getLieux();
 
         if (lieux != null && !lieux.isEmpty()) {
             String nomDepart  = lieux.get(lieux.size() - 1).getNom();

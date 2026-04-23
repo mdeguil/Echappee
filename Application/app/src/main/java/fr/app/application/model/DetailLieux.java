@@ -1,8 +1,13 @@
 package fr.app.application.model;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import com.google.gson.annotations.SerializedName;
 
+@Entity(tableName = "detail_lieu")
 public class DetailLieux {
+    @PrimaryKey
     @SerializedName("id")
     private int id;
 

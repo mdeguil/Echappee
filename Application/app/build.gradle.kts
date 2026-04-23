@@ -28,7 +28,7 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true  // ← nécessaire pour que BuildConfig soit généré
+        buildConfig = true
     }
 
     buildTypes {
@@ -46,6 +46,10 @@ android {
     }
 }
 
+configurations.all {
+    exclude(group = "com.google.guava", module = "listenablefuture")
+}
+
 dependencies {
 
     implementation(libs.appcompat)
@@ -59,6 +63,9 @@ dependencies {
     implementation(libs.cardview)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+    implementation(libs.compiler)
+    implementation(libs.room.guava)
+    implementation(libs.room.runtime)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

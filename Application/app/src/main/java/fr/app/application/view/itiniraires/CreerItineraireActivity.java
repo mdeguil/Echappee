@@ -33,8 +33,8 @@ import java.util.Map;
 import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.controller.LieuController;
+import fr.app.application.model.Itiniraire;
 import fr.app.application.model.Lieu;
-import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.DirectionsUtils;
 import fr.app.application.view.adapter.LieuSelectionneAdapter;
 
@@ -309,7 +309,7 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         itineraireController.creerItineraire(dureTotal, idLieux,
                 new ItineraireController.CallbackCreerItineraire() {
                     @Override
-                    public void onSucces(fr.app.application.model.Itineraire itineraire) {
+                    public void onSucces(Itiniraire itineraire) {
                         barreChargement.setVisibility(View.GONE);
                         String dureeAffichee = dureTotal > 0
                                 ? formatDuree(dureTotal)

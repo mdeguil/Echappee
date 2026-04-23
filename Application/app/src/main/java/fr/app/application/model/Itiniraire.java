@@ -1,10 +1,14 @@
 package fr.app.application.model;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-public class Itineraire {
-
+@Entity(tableName = "Itiniraire")
+public class Itiniraire {
+    @PrimaryKey
     @SerializedName("id")
     private int id;
 
