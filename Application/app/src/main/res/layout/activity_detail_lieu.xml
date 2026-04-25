@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    activity_detail_lieu.xml
-    À placer dans : res/layout/activity_detail_lieu.xml
--->
+
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,11 +7,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/colorSurface"
-    tools:context=".view.DetailLieuActivity">
+    tools:context=".view.detailsLieux.DetailLieuActivity">
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         AppBar : photo principale + parallaxe
-    ══════════════════════════════════════════════════════════════════ -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -53,9 +47,6 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         Contenu scrollable
-    ══════════════════════════════════════════════════════════════════ -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -68,7 +59,6 @@
             android:paddingTop="20dp"
             android:paddingBottom="40dp">
 
-            <!-- ── En-tête : Nom · Catégorie · Note ────────────────────── -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -123,9 +113,6 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Météo du jour  ☀️
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionMeteo"
                 android:layout_width="match_parent"
@@ -134,7 +121,6 @@
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <!-- En-tête de section -->
                 <LinearLayout
                     style="@style/SectionHeader"
                     android:layout_width="match_parent"
@@ -157,7 +143,6 @@
 
                 </LinearLayout>
 
-                <!-- Card météo -->
                 <com.google.android.material.card.MaterialCardView
                     style="@style/SectionCard"
                     android:layout_width="match_parent"
@@ -170,7 +155,6 @@
                         android:padding="12dp"
                         android:gravity="center_vertical">
 
-                        <!-- Icône météo -->
                         <ImageView
                             android:id="@+id/imgMeteoIcone"
                             android:layout_width="64dp"
@@ -179,7 +163,6 @@
                             android:scaleType="fitCenter"
                             tools:src="@android:drawable/ic_menu_gallery" />
 
-                        <!-- Infos textuelles -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -187,7 +170,6 @@
                             android:orientation="vertical"
                             android:layout_marginStart="8dp">
 
-                            <!-- Description + température -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -218,7 +200,6 @@
 
                             </LinearLayout>
 
-                            <!-- Ressenti -->
                             <TextView
                                 android:id="@+id/tvMeteoRessenti"
                                 android:layout_width="wrap_content"
@@ -228,7 +209,6 @@
                                 android:layout_marginBottom="6dp"
                                 tools:text="Ressenti : 16 °C" />
 
-                            <!-- Ligne humidité + vent -->
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
@@ -260,7 +240,6 @@
 
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- ProgressBar météo (chargement) -->
                 <ProgressBar
                     android:id="@+id/progressBarMeteo"
                     android:layout_width="wrap_content"
@@ -270,7 +249,6 @@
                     android:visibility="gone"
                     tools:visibility="gone" />
 
-                <!-- Message d'erreur météo -->
                 <TextView
                     android:id="@+id/tvErreurMeteo"
                     android:layout_width="match_parent"
@@ -289,7 +267,6 @@
 
             </LinearLayout>
 
-            <!-- ── ProgressBar (chargement des détails API) ────────────── -->
             <ProgressBar
                 android:id="@+id/progressBarDetail"
                 android:layout_width="wrap_content"
@@ -299,7 +276,6 @@
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <!-- ── Message d'erreur ─────────────────────────────────────── -->
             <TextView
                 android:id="@+id/tvErreurDetail"
                 android:layout_width="match_parent"
@@ -312,9 +288,6 @@
                 tools:text="Impossible de charger les détails"
                 tools:visibility="visible" />
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Description
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionDescription"
                 android:layout_width="match_parent"
@@ -362,9 +335,6 @@
                     android:layout_height="1dp" />
             </LinearLayout>
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Horaires
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionHoraires"
                 android:layout_width="match_parent"
@@ -412,9 +382,6 @@
                     android:layout_height="1dp" />
             </LinearLayout>
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Tarifs
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionTarifs"
                 android:layout_width="match_parent"
@@ -461,9 +428,6 @@
                     android:layout_height="1dp" />
             </LinearLayout>
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Accessibilité
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionAccessibilite"
                 android:layout_width="match_parent"
@@ -511,9 +475,6 @@
                     android:layout_height="1dp" />
             </LinearLayout>
 
-            <!-- ════════════════════════════════════════════════════════
-                 SECTION : Photos
-            ════════════════════════════════════════════════════════ -->
             <LinearLayout
                 android:id="@+id/sectionPhotos"
                 android:layout_width="match_parent"

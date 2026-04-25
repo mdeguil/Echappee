@@ -40,6 +40,9 @@
             android:parentActivityName=".view.itiniraires.DetailItineraireActivity" />
 
         <activity
+            android:name=".view.visite.HistoriqueVisiteActivity"
+            android:exported="true" />
+        <activity
             android:name=".view.itiniraires.ItineraireActivity"
             android:exported="false" />
         <activity
