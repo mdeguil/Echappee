@@ -33,6 +33,7 @@ class Lieu
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['visite:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]

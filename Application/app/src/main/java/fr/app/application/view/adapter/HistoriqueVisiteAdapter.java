@@ -17,7 +17,7 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.model.Visite;
 
-public class VisiteAdapter extends RecyclerView.Adapter<VisiteAdapter.ViewHolder> {
+public class HistoriqueVisiteAdapter extends RecyclerView.Adapter<HistoriqueVisiteAdapter.ViewHolder> {
 
     public interface OnSupprimerListener {
         void onSupprimer(Visite visite, int position);
@@ -26,7 +26,7 @@ public class VisiteAdapter extends RecyclerView.Adapter<VisiteAdapter.ViewHolder
     private final List<Visite>         visites;
     private final OnSupprimerListener  onSupprimer;
 
-    public VisiteAdapter(List<Visite> visites, OnSupprimerListener onSupprimer) {
+    public HistoriqueVisiteAdapter(List<Visite> visites, OnSupprimerListener onSupprimer) {
         this.visites     = visites;
         this.onSupprimer = onSupprimer;
     }
@@ -43,23 +43,10 @@ public class VisiteAdapter extends RecyclerView.Adapter<VisiteAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Visite visite = visites.get(position);
 
-        /*
-        holder.tvNomLieu.setText(visite.getNomLieu() != null
-                ? "📍 " + visite.getNomLieu() : "📍 Lieu inconnu");
-        */
-
-        holder.tvDate.setText("📅 " + (visite.getDate() != null
-                ? visite.getDate() : "Date inconnue"));
-
-        if (visite.getNote() > 0) {
-            holder.ratingBar.setVisibility(View.VISIBLE);
-            holder.ratingBar.setRating(visite.getNote());
-        } else {
-            holder.ratingBar.setVisibility(View.GONE);
-        }
-
-        holder.tvCommentaire.setText(visite.getMessage() != null
-                ? "💬 " + visite.getMessage() : "Aucun commentaire");
+        holder.tvDate.setText("📅 " + visite.getDateFormatee());
+        holder.tvNomLieu.setText("📍 " + (visite.getNomLieu() != null ? visite.getNomLieu() : "Lieu inconnu"));
+        holder.ratingBar.setRating(visite.getNote());
+        holder.tvCommentaire.setText("💬 " + (visite.getMessage() != null ? visite.getMessage() : "Aucun commentaire"));
 
 
         holder.btnSupprimer.setOnClickListener(v ->

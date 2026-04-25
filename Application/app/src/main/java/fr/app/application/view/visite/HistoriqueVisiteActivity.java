@@ -1,6 +1,5 @@
 package fr.app.application.view.visite;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,14 +19,14 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.controller.VisiteController;
 import fr.app.application.model.Visite;
-import fr.app.application.view.adapter.VisiteAdapter;
+import fr.app.application.view.adapter.HistoriqueVisiteAdapter;
 
 public class HistoriqueVisiteActivity extends AppCompatActivity {
 
     private ProgressBar    barreChargement;
     private TextView       tvAucuneVisite;
     private RecyclerView   recyclerVisites;
-    private VisiteAdapter  adapter;
+    private HistoriqueVisiteAdapter adapter;
     private VisiteController visiteController;
 
     private final List<Visite> visites = new ArrayList<>();
@@ -54,7 +53,7 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
         recyclerVisites = findViewById(R.id.recyclerVisites);
 
         recyclerVisites.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new VisiteAdapter(visites, this::supprimerVisite);
+        adapter = new HistoriqueVisiteAdapter(visites, this::supprimerVisite);
         recyclerVisites.setAdapter(adapter);
 
         MaterialButton btnRetour = findViewById(R.id.btnRetour);

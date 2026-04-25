@@ -34,18 +34,18 @@ class Commentaire
     private ?int $id = null;
 
     #[ORM\Column]
-    #[Groups(['commentaire:read', 'commentaire:write'])]
+    #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?int $note = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['commentaire:read', 'commentaire:write'])]
+    #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?string $message = null;
 
     /**
      * @var Collection<int, Lieu>
      */
     #[ORM\OneToMany(targetEntity: Lieu::class, mappedBy: 'commentaires')]
-    #[Groups(['commentaire:read'])]
+    #[Groups(['commentaire:read', 'visite:read'])]
     private Collection $lieu;
 
     /**
