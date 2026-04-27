@@ -44,6 +44,7 @@ import fr.app.application.utils.VolleyUtils;
 import fr.app.application.view.adapter.LieuAdapter;
 import fr.app.application.view.itiniraires.CreerItineraireActivity;
 import fr.app.application.view.itiniraires.ItineraireActivity;
+import fr.app.application.view.visite.HistoriqueVisiteActivity;
 
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final String ENDPOINT_LIEUX  = "/api/lieus";
@@ -57,7 +58,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private List<Lieu>  listeLieux = new ArrayList<>();
     private List<Lieu> listeLieuxComplete = new ArrayList<>();
 
-    private MaterialButton btnCreerItineraire, btnVoirItineraires;
+    private MaterialButton btnCreerItineraire, btnVoirItineraires, btnHistorique;
 
     private Map<Integer, Marker> marqueurParId = new HashMap<>();
 
@@ -70,6 +71,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
         btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
+        btnHistorique = findViewById(R.id.btnHistorique);
 
 
         btnCreerItineraire.setOnClickListener(v ->
@@ -81,6 +83,10 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
             Intent intent = new Intent(this, ItineraireActivity.class);
             startActivity(intent);
         });
+
+        btnHistorique.setOnClickListener(v ->
+                startActivity(new Intent(this, HistoriqueVisiteActivity.class))
+        );
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
