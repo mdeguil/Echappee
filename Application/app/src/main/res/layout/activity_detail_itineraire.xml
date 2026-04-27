@@ -61,15 +61,6 @@
         android:background="?attr/colorSurface"
         android:elevation="8dp">
 
-        <!-- Titre -->
-        <TextView
-            android:id="@+id/tvDetailItineraireTitre"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?attr/textAppearanceHeadlineSmall"
-            android:textStyle="bold"
-            android:textColor="?attr/colorPrimary"
-            android:layout_marginBottom="12dp" />
 
         <!-- Durée + Nb lieux -->
         <LinearLayout
@@ -142,6 +133,16 @@
                 android:textColor="?attr/colorOnSurfaceVariant" />
 
         </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerLieuxVisite"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="8dp"
+            android:clipToPadding="false" />
 
     </LinearLayout>
 

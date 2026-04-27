@@ -52,8 +52,8 @@ public class ItineraireAdapter extends RecyclerView.Adapter<ItineraireAdapter.Vi
         List<Itiniraire.LieuRef> lieux = itineraire.getLieux();
 
         if (lieux != null && !lieux.isEmpty()) {
-            String nomDepart  = lieux.get(lieux.size() - 1).getNom();
-            String nomArrivee = lieux.get(0).getNom();
+            String nomDepart  = lieux.get(0).getNom();
+            String nomArrivee = lieux.get(lieux.size() - 1).getNom();
 
             if (lieux.size() == 1) {
                 holder.tvTitre.setText("📍 " + nomDepart);

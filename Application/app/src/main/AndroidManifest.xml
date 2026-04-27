@@ -36,6 +36,13 @@
             android:value="AIzaSyAFFP_NkxnYZQ4rHVD0-nPq_iin_xodeXY" />
 
         <activity
+            android:name=".view.visite.VisiteActivity"
+            android:parentActivityName=".view.itiniraires.DetailItineraireActivity" />
+
+        <activity
+            android:name=".view.visite.HistoriqueVisiteActivity"
+            android:exported="true" />
+        <activity
             android:name=".view.itiniraires.ItineraireActivity"
             android:exported="false" />
         <activity

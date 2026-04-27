@@ -44,6 +44,7 @@ import fr.app.application.utils.BDD.AppDatabase;
 import fr.app.application.view.adapter.LieuAdapter;
 import fr.app.application.view.itiniraires.CreerItineraireActivity;
 import fr.app.application.view.itiniraires.ItineraireActivity;
+import fr.app.application.view.visite.HistoriqueVisiteActivity;
 
 public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -58,8 +59,8 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private List<Lieu>  listeLieuxComplete = new ArrayList<>();
     private boolean     lieuxDejaCharges   = false; // évite double chargement
 
-    private MaterialButton          btnCreerItineraire, btnVoirItineraires;
     private Map<Integer, Marker>    marqueurParId = new HashMap<>();
+    private MaterialButton btnCreerItineraire, btnVoirItineraires, btnHistorique;
 
     private LieuController lieuController;
     private AppDatabase    db;
@@ -75,6 +76,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         barreChargement    = findViewById(R.id.barreChargement);
         btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
         btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
+        btnHistorique = findViewById(R.id.btnHistorique);
 
         // ── Bouton créer itinéraire : désactivé si hors ligne ─────────────
         boolean enLigne = estConnecte();
@@ -94,6 +96,16 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         btnVoirItineraires.setOnClickListener(v ->
                 startActivity(new Intent(this, ItineraireActivity.class))
+        );
+
+
+        btnVoirItineraires.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ItineraireActivity.class);
+            startActivity(intent);
+        });
+
+        btnHistorique.setOnClickListener(v ->
+                startActivity(new Intent(this, HistoriqueVisiteActivity.class))
         );
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);

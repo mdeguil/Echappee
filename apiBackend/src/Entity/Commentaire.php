@@ -2,29 +2,50 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\CommentaireRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
+#[ApiResource(
+    operations: [
+        new GetCollection(normalizationContext: ['groups' => ['commentaire:read']]),
+        new Get(normalizationContext: ['groups' => ['commentaire:read']]),
+        new Post(
+            normalizationContext:   ['groups' => ['commentaire:read']],
+            denormalizationContext: ['groups' => ['commentaire:write']]
+        ),
+        new Delete(),
+    ]
+)]
 class Commentaire
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['commentaire:read'])]
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?int $note = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?string $message = null;
 
     /**
      * @var Collection<int, Lieu>
      */
     #[ORM\OneToMany(targetEntity: Lieu::class, mappedBy: 'commentaires')]
+    #[Groups(['commentaire:read', 'visite:read'])]
     private Collection $lieu;
 
     /**
