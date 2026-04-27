@@ -1,8 +1,8 @@
 package fr.app.application.controller;
 
-import static android.content.ContentValues.TAG;
-
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.android.volley.Request;
@@ -12,26 +12,22 @@ import com.google.gson.Gson;
 import fr.app.application.model.DetailLieux;
 import fr.app.application.model.ReponseDetailLieux;
 import fr.app.application.utils.ApiConfig;
+import fr.app.application.utils.BDD.AppDatabase;
 import fr.app.application.utils.VolleyUtils;
 
 /**
- * Controller qui récupère le détail d'un lieu depuis l'API.
- *
- * Endpoint attendu : GET /api/detail_lieus/{id}
- * Réponse attendue : { "data": { "id": 1, "description": "...", "horaires": "...",
- *                                "tarif": 12, "accessibilite": "...", "photos": "url" } }
+ * Controller qui récupère le détail d'un lieu depuis l'API,
+ * le sauvegarde en BDD locale, et offre un fallback offline.
  */
 public class DetailLieuController {
 
-    private static final String TAG = "DetailLieuController";
+    private static final String TAG             = "DetailLieuController";
     private static final String ENDPOINT_DETAIL = "/api/detail_lieus/";
 
-    private final Context contexte;
-    private final Gson    gson;
+    private final Context     contexte;
+    private final Gson        gson;
+    private final AppDatabase db;
 
-    /**
-     * Interface de rappel pour la réception des données détaillées d'un lieu.
-     */
     public interface CallbackDetail {
         void onSucces(DetailLieux detail);
         void onErreur(String messageErreur);
@@ -40,19 +36,15 @@ public class DetailLieuController {
     public DetailLieuController(Context contexte) {
         this.contexte = contexte;
         this.gson     = new Gson();
+        this.db       = AppDatabase.getDatabase(contexte);
     }
 
     /**
      * Récupère les détails d'un lieu par son identifiant.
-     * Récupère les détails spécifiques d'un lieu via une requête GET.
-     *
-     * @param id       identifiant du lieu (provient de Lieu.getId())
-     * @param callback résultat ou erreur
-     * @param id       L'identifiant unique du détail à récupérer (lié à l'entité Lieu).
-     * @param callback L'interface de rappel pour traiter le résultat ou l'erreur.
+     * Sauvegarde le résultat en BDD pour l'accès offline.
+     * En cas d'erreur réseau, retourne les données locales si disponibles.
      */
     public void recupererDetail(int id, CallbackDetail callback) {
-        // L'URL de base est toujours lue depuis le singleton
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_DETAIL) + id;
 
         StringRequest requete = new StringRequest(
@@ -62,6 +54,8 @@ public class DetailLieuController {
                     try {
                         DetailLieux detail = gson.fromJson(reponse, DetailLieux.class);
                         if (detail != null && detail.getId() != 0) {
+                            // Sauvegarder en BDD pour l'accès offline
+                            new Thread(() -> db.myDao().insertDetailLieu(detail)).start();
                             callback.onSucces(detail);
                         } else {
                             callback.onErreur("Détail introuvable pour l'id " + id);
@@ -71,10 +65,21 @@ public class DetailLieuController {
                         callback.onErreur("Erreur de parsing : " + e.getMessage());
                     }
                 },
-                erreur -> callback.onErreur("Erreur réseau : " + erreur.getMessage())
+                erreur -> {
+                    // Fallback : lire depuis la BDD locale
+                    new Thread(() -> {
+                        DetailLieux local = db.myDao().getDetailLieu(id);
+                        Handler h = new Handler(Looper.getMainLooper());
+                        if (local != null) {
+                            h.post(() -> callback.onSucces(local));
+                        } else {
+                            h.post(() -> callback.onErreur(
+                                    "Erreur réseau et aucun détail local disponible"));
+                        }
+                    }).start();
+                }
         );
 
         VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
-
 }

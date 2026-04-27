@@ -28,7 +28,7 @@ android {
     }
 
     buildFeatures {
-        buildConfig = true  // ← nécessaire pour que BuildConfig soit généré
+        buildConfig = true
     }
 
     buildTypes {
@@ -59,6 +59,9 @@ dependencies {
     implementation(libs.cardview)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+    annotationProcessor(libs.room.compiler)
+    implementation(libs.room.runtime)
+    implementation(libs.concurrent.futures)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
