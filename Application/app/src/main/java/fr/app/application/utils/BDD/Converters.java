@@ -5,7 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 
 public class Converters {
 
@@ -24,14 +24,14 @@ public class Converters {
     }
 
     @TypeConverter
-    public static String fromLieuRefList(List<Itiniraire.LieuRef> list) {
+    public static String fromLieuRefList(List<Itineraire.LieuRef> list) {
         return list == null ? null : gson.toJson(list);
     }
 
     @TypeConverter
-    public static List<Itiniraire.LieuRef> toLieuRefList(String value) {
+    public static List<Itineraire.LieuRef> toLieuRefList(String value) {
         if (value == null) return null;
-        Type type = new TypeToken<List<Itiniraire.LieuRef>>(){}.getType();
+        Type type = new TypeToken<List<Itineraire.LieuRef>>(){}.getType();
         return gson.fromJson(value, type);
     }
 }

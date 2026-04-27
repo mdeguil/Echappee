@@ -10,12 +10,12 @@ import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import fr.app.application.model.DetailLieux;
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 import fr.app.application.model.Lieu;
 import fr.app.application.model.Utilisateur;
 
 @Database(
-        entities = {Lieu.class, Itiniraire.class, Utilisateur.class, DetailLieux.class},
+        entities = {Lieu.class, Itineraire.class, Utilisateur.class, DetailLieux.class},
         version = 2,
         exportSchema = false
 )

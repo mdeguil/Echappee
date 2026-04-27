@@ -8,7 +8,7 @@ import androidx.room.Query;
 import java.util.List;
 
 import fr.app.application.model.DetailLieux;
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 import fr.app.application.model.Lieu;
 import fr.app.application.model.Utilisateur;
 
@@ -34,13 +34,13 @@ public interface MyDao {
     // ── Itinéraires ───────────────────────────────────────────────────────
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertItineraires(List<Itiniraire> itineraires);
+    void insertItineraires(List<Itineraire> itineraires);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertItineraire(Itiniraire itineraire);
+    void insertItineraire(Itineraire itineraire);
 
     @Query("SELECT * FROM itiniraire WHERE userId = :userId")
-    List<Itiniraire> getItinerairesByUser(int userId);
+    List<Itineraire> getItinerairesByUser(int userId);
 
     @Query("DELETE FROM itiniraire WHERE id = :id")
     void deleteItineraire(int id);

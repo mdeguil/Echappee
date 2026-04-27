@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fr.app.application.R;
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 import fr.app.application.utils.VolleyUtils;
 import fr.app.application.view.visite.VisiteActivity;
 
@@ -65,7 +65,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         setContentView(R.layout.activity_detail_itineraire);
 
         String json = getIntent().getStringExtra(EXTRA_ITINERAIRE);
-        itineraire  = new Gson().fromJson(json, Itiniraire.class);
+        itineraire  = new Gson().fromJson(json, Itineraire.class);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -106,7 +106,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             tvDuree.setText("Durée non définie");
         }
 
-        List<Itiniraire.LieuRef> lieux = itineraire.getLieux();
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
         int nbLieux = lieux != null ? lieux.size() : 0;
         tvNbLieux.setText(nbLieux + " lieu" + (nbLieux > 1 ? "x" : ""));
 
@@ -140,14 +140,14 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         carteMaps.getUiSettings().setZoomControlsEnabled(true);
         carteMaps.getUiSettings().setCompassEnabled(true);
 
-        List<Itiniraire.LieuRef> lieux = itineraire.getLieux();
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
         if (lieux == null || lieux.isEmpty()) return;
 
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
         boolean auMoinsUnPoint = false;
 
         for (int i = 0; i < lieux.size(); i++) {
-            Itiniraire.LieuRef lieu = lieux.get(i);
+            Itineraire.LieuRef lieu = lieux.get(i);
             if (lieu.getLat() == null || lieu.getLng() == null) continue;
 
             LatLng position = new LatLng(lieu.getLat(), lieu.getLng());
@@ -282,7 +282,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
 
         try {
             JSONArray coordinates = new JSONArray();
-            for (Itiniraire.LieuRef lieu : lieux) {
+            for (Itineraire.LieuRef lieu : lieux) {
                 if (lieu.getLat() == null || lieu.getLng() == null) continue;
                 JSONArray coord = new JSONArray();
                 coord.put(lieu.getLng());

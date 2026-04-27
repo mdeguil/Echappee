@@ -3,7 +3,7 @@ package fr.app.application.model.reponse;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 
 /**
  * Wrapper de la réponse API pour la liste des itinéraires.
@@ -12,7 +12,7 @@ import fr.app.application.model.Itiniraire;
 public class ReponseItineraires {
 
     @SerializedName("data")
-    private List<Itiniraire> data;
+    private List<Itineraire> data;
 
-    public List<Itiniraire> getData() { return data; }
+    public List<Itineraire> getData() { return data; }
 }

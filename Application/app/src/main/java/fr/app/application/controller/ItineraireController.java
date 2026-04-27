@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import java.util.Arrays;
 import java.util.List;
 
-import fr.app.application.model.Itiniraire;
+import fr.app.application.model.Itineraire;
 import fr.app.application.model.reponse.ReponseItineraires;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.BDD.AppDatabase;
@@ -32,12 +32,12 @@ public class ItineraireController {
     private final SessionManager session;
 
     public interface CallbackItineraires {
-        void onSucces(List<Itiniraire> itineraires);
+        void onSucces(List<Itineraire> itineraires);
         void onErreur(String messageErreur);
     }
 
     public interface CallbackCreerItineraire {
-        void onSucces(Itiniraire itineraire);
+        void onSucces(Itineraire itineraire);
         void onErreur(String messageErreur);
     }
 
@@ -65,20 +65,20 @@ public class ItineraireController {
                 url,
                 reponse -> {
                     try {
-                        List<Itiniraire> liste = null;
+                        List<Itineraire> liste = null;
                         ReponseItineraires rep = gson.fromJson(reponse, ReponseItineraires.class);
                         if (rep != null && rep.getData() != null) {
                             liste = rep.getData();
                         } else {
-                            Itiniraire[] tableau = gson.fromJson(reponse, Itiniraire[].class);
+                            Itineraire[] tableau = gson.fromJson(reponse, Itineraire[].class);
                             if (tableau != null) liste = Arrays.asList(tableau);
                         }
 
                         if (liste != null) {
-                            final List<Itiniraire> finalListe = liste;
+                            final List<Itineraire> finalListe = liste;
                             int userId = session.getUserId();
                             // Associer l'userId avant la sauvegarde
-                            for (Itiniraire it : finalListe) it.setUserId(userId);
+                            for (Itineraire it : finalListe) it.setUserId(userId);
 
                             new Thread(() -> db.myDao().insertItineraires(finalListe)).start();
                             callback.onSucces(finalListe);
@@ -93,7 +93,7 @@ public class ItineraireController {
                     // Fallback : itinéraires locaux de l'utilisateur connecté
                     int userId = session.getUserId();
                     new Thread(() -> {
-                        List<Itiniraire> locaux = db.myDao().getItinerairesByUser(userId);
+                        List<Itineraire> locaux = db.myDao().getItinerairesByUser(userId);
                         Handler h = new Handler(Looper.getMainLooper());
                         if (locaux != null && !locaux.isEmpty()) {
                             h.post(() -> callback.onSucces(locaux));
@@ -126,7 +126,7 @@ public class ItineraireController {
                     Request.Method.POST, url, body,
                     reponse -> {
                         try {
-                            Itiniraire itineraire = gson.fromJson(reponse.toString(), Itiniraire.class);
+                            Itineraire itineraire = gson.fromJson(reponse.toString(), Itineraire.class);
                             // Sauvegarder localement
                             int userId = session.getUserId();
                             itineraire.setUserId(userId);

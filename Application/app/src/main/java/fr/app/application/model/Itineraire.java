@@ -12,7 +12,7 @@ import fr.app.application.utils.BDD.Converters;
 
 @Entity(tableName = "itiniraire")
 @TypeConverters(Converters.class)
-public class Itiniraire {
+public class Itineraire {
     @PrimaryKey
     @SerializedName("id")
     private int id;
