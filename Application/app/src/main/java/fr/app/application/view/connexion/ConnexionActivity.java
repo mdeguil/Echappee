@@ -51,17 +51,23 @@ public class ConnexionActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         db             = AppDatabase.getDatabase(this);
 
-        // ── Auto-login offline ────────────────────────────────────────────
-        // Si un token JWT est déjà sauvegardé → on passe directement à l'accueil
-        if (sessionManager.isLoggedIn()) {
-            Log.d(TAG, "Session existante détectée, redirection directe (token présent)");
+        // Si on est HORS-LIGNE et qu'une session existe déjà
+        if (!isNetworkAvailable() && sessionManager.isLoggedIn()) {
+            Log.d(TAG, "Mode hors-ligne : utilisation de la session locale.");
             navigateToMain();
             return;
         }
 
-        Log.d(TAG, "Aucune session trouvée, affichage du formulaire de connexion");
+        // Sinon, on reste sur l'écran de connexion pour forcer l'auth via API
+        Log.d(TAG, "Connexion disponible ou session absente : formulaire affiché.");
         initViews();
         setupListeners();
+    }
+
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager connectivityManager = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+        android.net.NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     private void initViews() {
