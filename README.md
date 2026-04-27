@@ -37,6 +37,8 @@ cd Echappee/apiBackend
 
 ### 📦 Installer les dépendances
 
+supprimer le composer.lock avant de faire la commande 
+
 ``` bash
 composer install
 ```
@@ -61,6 +63,12 @@ php bin/console make:migration
 php bin/console doctrine:migrations:migrate
 php bin/console doctrine:fixture:load
 php bin/console app:importer-lieux
+```
+
+### ⚙️ Générer les Clé JWT
+
+``` bash
+php bin/console lexik:jwt:generate-keypair
 ```
 
 ------------------------------------------------------------------------
