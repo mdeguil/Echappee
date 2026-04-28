@@ -1,7 +1,10 @@
 package fr.app.application.view.itiniraires;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -10,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -75,6 +79,13 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         initVues();
         remplirInfos();
         initCarte();
+    }
+
+    public static boolean estConnecte(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm == null) return false;
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 
     private void initVues() {
@@ -244,16 +255,23 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             holder.tvNom.setText(lieu.getNom() != null ? lieu.getNom() : "—");
 
             boolean aCoordonnees = lieu.getLat() != null && lieu.getLng() != null;
-            holder.btnJySuis.setEnabled(aCoordonnees);
-            holder.btnJySuis.setOnClickListener(v ->{
-                listener.onJySuis(position);
+            if (estConnecte(holder.itemView.getContext())){
+                holder.btnJySuis.setEnabled(aCoordonnees);
+                holder.btnJySuis.setOnClickListener(v ->{
+                    listener.onJySuis(position);
 
-                Intent intent = new Intent(v.getContext(), VisiteActivity.class);
-                intent.putExtra(VisiteActivity.EXTRA_LIEU_ID,  lieu.getId());
-                intent.putExtra(VisiteActivity.EXTRA_LIEU_NOM, lieu.getNom());
-                v.getContext().startActivity(intent);
-            });
-
+                    Intent intent = new Intent(v.getContext(), VisiteActivity.class);
+                    intent.putExtra(VisiteActivity.EXTRA_LIEU_ID,  lieu.getId());
+                    intent.putExtra(VisiteActivity.EXTRA_LIEU_NOM, lieu.getNom());
+                    v.getContext().startActivity(intent);
+                });
+            }else {
+                holder.btnJySuis.setOnClickListener(v ->
+                        Toast.makeText(holder.itemView.getContext(),
+                                "Connexion requise",
+                                Toast.LENGTH_SHORT).show()
+                );
+            }
         }
 
         @Override

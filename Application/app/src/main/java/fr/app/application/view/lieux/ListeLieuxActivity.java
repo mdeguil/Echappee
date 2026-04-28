@@ -104,9 +104,21 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
             startActivity(intent);
         });
 
-        btnHistorique.setOnClickListener(v ->
-                startActivity(new Intent(this, HistoriqueVisiteActivity.class))
-        );
+        btnHistorique.setEnabled(enLigne);
+        btnHistorique.setAlpha(enLigne ? 1.0f : 0.4f);
+        if (enLigne) {
+            btnHistorique.setOnClickListener(v ->
+                    startActivity(new Intent(this, HistoriqueVisiteActivity.class))
+            );
+        } else {
+            btnHistorique.setOnClickListener(v ->
+                    Toast.makeText(this,
+                            "Connexion requise pour voir l'historique",
+                            Toast.LENGTH_SHORT).show()
+            );
+        }
+
+
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
