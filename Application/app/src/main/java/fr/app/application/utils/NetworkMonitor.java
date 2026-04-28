@@ -10,56 +10,48 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-/**
- * Surveille les changements de connectivité réseau et notifie
- * quand la connexion est rétablie, afin de déclencher une resynchronisation.
- *
- * Usage type dans une Activity :
- * <pre>
- *   private NetworkMonitor networkMonitor;
- *
- *   {@literal @}Override protected void onResume() {
- *       super.onResume();
- *       networkMonitor = new NetworkMonitor(this, this::resynchroniser);
- *       networkMonitor.start();
- *   }
- *
- *   {@literal @}Override protected void onPause() {
- *       super.onPause();
- *       networkMonitor.stop();
- *   }
- * </pre>
- */
+import java.util.concurrent.CopyOnWriteArrayList;
+
+
 public class NetworkMonitor {
 
-    /** Appelé sur le thread principal dès que la connexion est rétablie. */
-    public interface OnConnexionRetablie {
+    // ── Interface Observer ────────────────────────────────────────────────
+
+    public interface Observer {
         void onConnexionRetablie();
+
+        default void onConnexionPerdue() {}
+    }
+    private static volatile NetworkMonitor instance;
+
+    public static NetworkMonitor getInstance(@NonNull Context context) {
+        if (instance == null) {
+            synchronized (NetworkMonitor.class) {
+                if (instance == null) {
+                    instance = new NetworkMonitor(context.getApplicationContext());
+                }
+            }
+        }
+        return instance;
     }
 
-    private final ConnectivityManager    connectivityManager;
-    private final OnConnexionRetablie    listener;
-    private final Handler                mainHandler = new Handler(Looper.getMainLooper());
+    private final ConnectivityManager connectivityManager;
+    private final Handler             mainHandler  = new Handler(Looper.getMainLooper());
+
+    private final CopyOnWriteArrayList<Observer> observers = new CopyOnWriteArrayList<>();
 
     private ConnectivityManager.NetworkCallback networkCallback;
-    private boolean etaitHorsLigne = false;
+    private boolean estHorsLigne = false;
 
-    public NetworkMonitor(@NonNull Context context,
-                          @NonNull OnConnexionRetablie listener) {
+    private NetworkMonitor(@NonNull Context appContext) {
         this.connectivityManager =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        this.listener = listener;
+                (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
-    /**
-     * Démarre l'écoute des changements réseau.
-     * À appeler dans onResume() ou onStart().
-     */
     public void start() {
-        if (connectivityManager == null) return;
+        if (connectivityManager == null || networkCallback != null) return;
 
-        // Initialise l'état courant avant d'écouter
-        etaitHorsLigne = !estConnecte();
+        estHorsLigne = !estConnecte();
 
         NetworkRequest requete = new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -69,18 +61,21 @@ public class NetworkMonitor {
         networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                // Appelé quand un réseau valide devient disponible
-                if (etaitHorsLigne) {
-                    etaitHorsLigne = false;
-                    mainHandler.post(listener::onConnexionRetablie);
+                if (estHorsLigne) {
+                    estHorsLigne = false;
+                    mainHandler.post(() -> {
+                        for (Observer o : observers) o.onConnexionRetablie();
+                    });
                 }
             }
 
             @Override
             public void onLost(@NonNull Network network) {
-                // Connexion perdue : on note qu'on est hors ligne
                 if (!estConnecte()) {
-                    etaitHorsLigne = true;
+                    estHorsLigne = true;
+                    mainHandler.post(() -> {
+                        for (Observer o : observers) o.onConnexionPerdue();
+                    });
                 }
             }
         };
@@ -88,22 +83,15 @@ public class NetworkMonitor {
         connectivityManager.registerNetworkCallback(requete, networkCallback);
     }
 
-    /**
-     * Arrête l'écoute des changements réseau.
-     * À appeler dans onPause() ou onStop().
-     */
-    public void stop() {
-        if (connectivityManager != null && networkCallback != null) {
-            try {
-                connectivityManager.unregisterNetworkCallback(networkCallback);
-            } catch (IllegalArgumentException ignored) {
-                // Callback déjà désenregistré
-            }
-            networkCallback = null;
+    public void ajouterObserver(@NonNull Observer observer) {
+        if (!observers.contains(observer)) {
+            observers.add(observer);
         }
     }
+    public void retirerObserver(@NonNull Observer observer) {
+        observers.remove(observer);
+    }
 
-    /** Vérifie si une connexion Internet est actuellement disponible. */
     public boolean estConnecte() {
         if (connectivityManager == null) return false;
         Network network = connectivityManager.getActiveNetwork();

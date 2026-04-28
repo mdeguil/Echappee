@@ -64,9 +64,33 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
     private TextView     tvDepartArrivee;
     private ProgressBar  barreChargementTrace;
     private TextView     tvChargementTrace;
+    private final NetworkMonitor.Observer networkObserver = new NetworkMonitor.Observer() {
+        @Override
+        public void onConnexionRetablie() {
+            Toast.makeText(DetailItineraireActivity.this,
+                    "Connexion rétablie — resynchronisation…",
+                    Toast.LENGTH_SHORT).show();
 
-    // ── Surveillance réseau ───────────────────────────────────────────────
-    private NetworkMonitor networkMonitor;
+            List<Itineraire.LieuRef> lieux = itineraire.getLieux();
+            if (carteMaps != null && lieux != null && lieux.size() >= 2) {
+                chargerTraceOSRM(lieux);
+            }
+
+            if (lieuxAdapter != null) {
+                lieuxAdapter.notifyDataSetChanged();
+            }
+        }
+
+        @Override
+        public void onConnexionPerdue() {
+            Toast.makeText(DetailItineraireActivity.this,
+                    "Connexion perdue — mode hors ligne",
+                    Toast.LENGTH_SHORT).show();
+            if (lieuxAdapter != null) {
+                lieuxAdapter.notifyDataSetChanged();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,55 +110,22 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         initCarte();
     }
 
-    // ── Cycle de vie : démarrer/arrêter le monitor réseau ─────────────────
-
     @Override
     protected void onResume() {
         super.onResume();
-        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
-        networkMonitor.start();
+        NetworkMonitor.getInstance(this).ajouterObserver(networkObserver);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (networkMonitor != null) {
-            networkMonitor.stop();
-        }
+        NetworkMonitor.getInstance(this).retirerObserver(networkObserver);
     }
 
-    /**
-     * Appelé automatiquement par NetworkMonitor dès que le réseau revient.
-     * Recharge le tracé ORS sur la carte et rafraîchit les boutons "J'y suis".
-     */
-    private void onConnexionRetablie() {
-        Toast.makeText(this,
-                "Connexion rétablie — resynchronisation…",
-                Toast.LENGTH_SHORT).show();
-
-        // 1. Recharger le tracé sur la carte si elle est prête
-        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
-        if (carteMaps != null && lieux != null && lieux.size() >= 2) {
-            chargerTraceOSRM(lieux);
-        }
-
-        // 2. Rafraîchir les boutons "J'y suis" dans le RecyclerView
-        if (lieuxAdapter != null) {
-            lieuxAdapter.notifyDataSetChanged();
-        }
-    }
-
-    // ── Connectivité ──────────────────────────────────────────────────────
 
     public static boolean estConnecte(Context context) {
-        ConnectivityManager cm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        return info != null && info.isConnected();
+        return NetworkMonitor.getInstance(context).estConnecte();
     }
-
-    // ── Initialisation ────────────────────────────────────────────────────
 
     private void initVues() {
         tvDuree              = findViewById(R.id.tvDetailItineraireDuree);
@@ -190,8 +181,6 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             fragmentCarte.getMapAsync(this);
         }
     }
-
-    // ── Carte ─────────────────────────────────────────────────────────────
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -263,8 +252,6 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         }
     }
 
-    // ── Adapter ───────────────────────────────────────────────────────────
-
     interface OnLieuClickListener {
         void onJySuis(int index);
     }
@@ -304,9 +291,9 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             holder.tvNom.setText(lieu.getNom() != null ? lieu.getNom() : "—");
 
             boolean aCoordonnees = lieu.getLat() != null && lieu.getLng() != null;
-            boolean enLigne      = estConnecte(holder.itemView.getContext());
+            boolean enLigne      = NetworkMonitor.getInstance(
+                    holder.itemView.getContext()).estConnecte();
 
-            // Le bouton n'est actif que si on est connecté ET que le lieu a des coordonnées
             holder.btnJySuis.setEnabled(enLigne && aCoordonnees);
             holder.btnJySuis.setAlpha(enLigne ? 1.0f : 0.4f);
 

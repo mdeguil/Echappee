@@ -1,11 +1,8 @@
 package fr.app.application.view.lieux;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -58,12 +55,28 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private List<Lieu>  listeLieuxComplete = new ArrayList<>();
     private boolean     lieuxDejaCharges   = false;
 
-    private Map<Integer, Marker>    marqueurParId = new HashMap<>();
+    private Map<Integer, Marker> marqueurParId = new HashMap<>();
     private MaterialButton btnCreerItineraire, btnVoirItineraires, btnHistorique;
 
     private LieuController lieuController;
     private AppDatabase    db;
-    private NetworkMonitor networkMonitor;
+
+    private final NetworkMonitor.Observer networkObserver = new NetworkMonitor.Observer() {
+        @Override
+        public void onConnexionRetablie() {
+            configurerBoutons();
+            chargerLieux();
+            Toast.makeText(ListeLieuxActivity.this,
+                    "Connexion rétablie", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onConnexionPerdue() {
+            configurerBoutons();
+            Toast.makeText(ListeLieuxActivity.this,
+                    "Connexion perdue — mode hors ligne", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,16 +95,12 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
-        adaptateur = new LieuAdapter(this, listeLieux, lieu -> centrerCarteOnLieu(lieu));
+        adaptateur = new LieuAdapter(this, listeLieux, this::centrerCarteOnLieu);
         recyclerLieux.setAdapter(adaptateur);
-
-        chargerLieux();
 
         SupportMapFragment fragmentCarte = (SupportMapFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragmentCarte);
-        if (fragmentCarte != null) {
-            fragmentCarte.getMapAsync(this);
-        }
+        if (fragmentCarte != null) fragmentCarte.getMapAsync(this);
 
         EditText champRecherche = findViewById(R.id.champRecherche);
         champRecherche.addTextChangedListener(new TextWatcher() {
@@ -101,50 +110,23 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         });
     }
 
-    // ── Cycle de vie : démarrer/arrêter le monitor réseau ─────────────────
-
     @Override
     protected void onResume() {
         super.onResume();
-        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
-        networkMonitor.start();
+        NetworkMonitor.getInstance(this).ajouterObserver(networkObserver);
+        chargerLieux();
+        configurerBoutons();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        if (networkMonitor != null) {
-            networkMonitor.stop();
-        }
+        NetworkMonitor.getInstance(this).retirerObserver(networkObserver);
     }
-
-    /**
-     * Appelé automatiquement par NetworkMonitor dès que le réseau revient.
-     * Resynchronise les lieux depuis l'API et met à jour les boutons.
-     */
-    private void onConnexionRetablie() {
-        Toast.makeText(this,
-                "Connexion rétablie — resynchronisation…",
-                Toast.LENGTH_SHORT).show();
-
-        // Remettre les boutons en état connecté
-        configurerBoutons();
-
-        // Recharger les lieux depuis l'API (pas le fallback BDD)
-        chargerLieux();
-    }
-
-    // ── Connectivité ──────────────────────────────────────────────────────
 
     private boolean estConnecte() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm == null) return false;
-        NetworkInfo info = cm.getActiveNetworkInfo();
-        return info != null && info.isConnected();
+        return NetworkMonitor.getInstance(this).estConnecte();
     }
-
-    // ── Configuration des boutons selon l'état réseau ─────────────────────
 
     private void configurerBoutons() {
         boolean enLigne = estConnecte();
@@ -152,37 +134,21 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         btnCreerItineraire.setEnabled(enLigne);
         btnCreerItineraire.setAlpha(enLigne ? 1.0f : 0.4f);
         btnCreerItineraire.setOnClickListener(v -> {
-            if (enLigne) {
-                startActivity(new Intent(this, CreerItineraireActivity.class));
-            } else {
-                Toast.makeText(this,
-                        "Connexion requise pour créer un itinéraire",
-                        Toast.LENGTH_SHORT).show();
-            }
+            if (enLigne) startActivity(new Intent(this, CreerItineraireActivity.class));
+            else Toast.makeText(this, "Connexion requise pour créer un itinéraire", Toast.LENGTH_SHORT).show();
         });
 
         btnVoirItineraires.setOnClickListener(v ->
-                startActivity(new Intent(this, ItineraireActivity.class))
-        );
+                startActivity(new Intent(this, ItineraireActivity.class)));
 
         btnHistorique.setEnabled(enLigne);
         btnHistorique.setAlpha(enLigne ? 1.0f : 0.4f);
         btnHistorique.setOnClickListener(v -> {
-            if (enLigne) {
-                startActivity(new Intent(this, HistoriqueVisiteActivity.class));
-            } else {
-                Toast.makeText(this,
-                        "Connexion requise pour voir l'historique",
-                        Toast.LENGTH_SHORT).show();
-            }
+            if (enLigne) startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+            else Toast.makeText(this, "Connexion requise pour voir l'historique", Toast.LENGTH_SHORT).show();
         });
     }
 
-    // ── Chargement des lieux ──────────────────────────────────────────────
-
-    /**
-     * Charge les lieux via LieuController (API → fallback BDD si hors ligne).
-     */
     private void chargerLieux() {
         barreChargement.setVisibility(View.VISIBLE);
 
@@ -211,16 +177,12 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
             }
 
             @Override
-            public void onErreur(String messageErreur) {
+            public void onErreur(String msg) {
                 barreChargement.setVisibility(View.GONE);
-                Toast.makeText(ListeLieuxActivity.this,
-                        "Erreur : " + messageErreur,
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(ListeLieuxActivity.this, "Erreur : " + msg, Toast.LENGTH_LONG).show();
             }
         });
     }
-
-    // ── Carte ─────────────────────────────────────────────────────────────
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -243,8 +205,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         }
     }
 
-    // ── Filtrage ──────────────────────────────────────────────────────────
-
     private void filtrerLieux(String texte) {
         List<Lieu> resultat = new ArrayList<>();
         if (texte.trim().isEmpty()) {
@@ -262,19 +222,16 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         String nom       = lieu.getNom()       != null ? lieu.getNom().toLowerCase()       : "";
         String categorie = lieu.getCategorie() != null ? lieu.getCategorie().toLowerCase() : "";
         if (nom.contains(recherche) || categorie.contains(recherche)) return true;
-        String[] mots = recherche.split("\\s+");
-        for (String mot : mots) {
+        for (String mot : recherche.split("\\s+")) {
             if (mot.length() < 3) continue;
-            if (contiendApproximativement(nom, mot) || contiendApproximativement(categorie, mot))
-                return true;
+            if (contiendApproximativement(nom, mot) || contiendApproximativement(categorie, mot)) return true;
         }
         return false;
     }
 
     private boolean contiendApproximativement(String texte, String mot) {
-        String[] motsTexte = texte.split("\\s+");
         int tolerance = mot.length() <= 6 ? 1 : 2;
-        for (String motTexte : motsTexte) {
+        for (String motTexte : texte.split("\\s+")) {
             if (distanceLevenshtein(motTexte, mot) <= tolerance) return true;
         }
         return false;
@@ -295,27 +252,19 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         return prev[b.length()];
     }
 
-    // ── Carte helpers ─────────────────────────────────────────────────────
-
     private void ajouterMarqueurSurCarte(Lieu lieu) {
         if (carteMaps == null) return;
         if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
-        LatLng position = new LatLng(lieu.getLatitude(), lieu.getLongitude());
-        Marker marqueur = carteMaps.addMarker(new MarkerOptions()
-                .position(position)
-                .title(lieu.getNom())
-                .snippet(lieu.getCategorie())
-                .icon(BitmapDescriptorFactory.defaultMarker(
-                        obtenirCouleurCategorie(lieu.getCategorie()))));
-        if (marqueur != null) {
-            marqueur.setTag(lieu.getId());
-            marqueurParId.put(lieu.getId(), marqueur);
-        }
+        LatLng pos = new LatLng(lieu.getLatitude(), lieu.getLongitude());
+        Marker m = carteMaps.addMarker(new MarkerOptions()
+                .position(pos).title(lieu.getNom()).snippet(lieu.getCategorie())
+                .icon(BitmapDescriptorFactory.defaultMarker(obtenirCouleurCategorie(lieu.getCategorie()))));
+        if (m != null) { m.setTag(lieu.getId()); marqueurParId.put(lieu.getId(), m); }
     }
 
-    private float obtenirCouleurCategorie(String categorie) {
-        if (categorie == null) return BitmapDescriptorFactory.HUE_RED;
-        switch (categorie) {
+    private float obtenirCouleurCategorie(String c) {
+        if (c == null) return BitmapDescriptorFactory.HUE_RED;
+        switch (c) {
             case "Musée":                       return BitmapDescriptorFactory.HUE_BLUE;
             case "Site et monument historique": return BitmapDescriptorFactory.HUE_ORANGE;
             case "Parc et jardin":              return BitmapDescriptorFactory.HUE_GREEN;
@@ -326,50 +275,40 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     private void centrerCarteOnLieu(Lieu lieu) {
-        if (carteMaps == null) return;
-        if (lieu.getLatitude() == null || lieu.getLongitude() == null) return;
-        LatLng position = new LatLng(lieu.getLatitude(), lieu.getLongitude());
-        carteMaps.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 14f));
-        Marker marqueur = marqueurParId.get(lieu.getId());
-        if (marqueur != null) marqueur.showInfoWindow();
+        if (carteMaps == null || lieu.getLatitude() == null || lieu.getLongitude() == null) return;
+        LatLng pos = new LatLng(lieu.getLatitude(), lieu.getLongitude());
+        carteMaps.animateCamera(CameraUpdateFactory.newLatLngZoom(pos, 14f));
+        Marker m = marqueurParId.get(lieu.getId());
+        if (m != null) m.showInfoWindow();
     }
 
     private void faireDefilerListeVers(int idLieu) {
         for (int i = 0; i < listeLieux.size(); i++) {
             if (listeLieux.get(i).getId() == idLieu) {
-                RecyclerView recycler = findViewById(R.id.recyclerLieux);
-                recycler.smoothScrollToPosition(i);
+                ((RecyclerView) findViewById(R.id.recyclerLieux)).smoothScrollToPosition(i);
                 break;
             }
         }
     }
 
     private void activerPositionUtilisateur() {
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
             carteMaps.setMyLocationEnabled(true);
         } else {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    CODE_PERMISSION);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, CODE_PERMISSION);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int codeRequete,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] resultats) {
-        super.onRequestPermissionsResult(codeRequete, permissions, resultats);
-        if (codeRequete == CODE_PERMISSION
-                && resultats.length > 0
-                && resultats[0] == PackageManager.PERMISSION_GRANTED
-                && carteMaps != null) {
-            if (ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)
-                    == PackageManager.PERMISSION_GRANTED) {
-                carteMaps.setMyLocationEnabled(true);
-            }
+    public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] res) {
+        super.onRequestPermissionsResult(code, perms, res);
+        if (code == CODE_PERMISSION && res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED
+                && carteMaps != null
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            carteMaps.setMyLocationEnabled(true);
         }
     }
 }

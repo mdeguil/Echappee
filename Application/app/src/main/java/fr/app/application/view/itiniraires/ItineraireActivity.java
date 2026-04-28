@@ -28,8 +28,6 @@ public class ItineraireActivity extends AppCompatActivity {
     private ItineraireController controleur;
     private final List<Itineraire> listeItineraires = new ArrayList<>();
 
-    private NetworkMonitor networkMonitor;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,26 +45,6 @@ public class ItineraireActivity extends AppCompatActivity {
         chargerItineraires();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
-        networkMonitor.start();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (networkMonitor != null) {
-            networkMonitor.stop();
-        }
-    }
-
-    private void onConnexionRetablie() {
-        Toast.makeText(this,
-                "Connexion rétablie — resynchronisation…",
-                Toast.LENGTH_SHORT).show();
-    }
 
     private void initVues() {
         barreChargement       = findViewById(R.id.barreChargementItineraire);
@@ -75,7 +53,6 @@ public class ItineraireActivity extends AppCompatActivity {
 
         recyclerItineraires.setLayoutManager(new LinearLayoutManager(this));
 
-        // Passer le callback de suppression à l'adapter
         adaptateur = new ItineraireAdapter(this, listeItineraires, this::supprimerItineraire);
         recyclerItineraires.setAdapter(adaptateur);
 
@@ -108,8 +85,6 @@ public class ItineraireActivity extends AppCompatActivity {
             }
         });
     }
-
-    // ── Suppression ───────────────────────────────────────────────────────
 
     private void supprimerItineraire(Itineraire itineraire, int position) {
         controleur.supprimerItineraire(itineraire.getId(),
