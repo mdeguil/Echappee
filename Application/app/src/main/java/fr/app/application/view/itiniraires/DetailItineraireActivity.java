@@ -42,6 +42,7 @@ import java.util.List;
 
 import fr.app.application.R;
 import fr.app.application.model.Itineraire;
+import fr.app.application.utils.NetworkMonitor;
 import fr.app.application.utils.VolleyUtils;
 import fr.app.application.view.visite.VisiteActivity;
 
@@ -50,18 +51,22 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
     public static final String EXTRA_ITINERAIRE = "extra_itineraire";
     private static final String ORS_BASE_URL = "https://api.openrouteservice.org/v2/directions/foot-walking/geojson";
     private static final String ORS_API_KEY  = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjJlYjU0ZWNjMmEyYzQwOTliMTM4NDFmMzMzMTA2Yjc4IiwiaCI6Im11cm11cjY0In0=";
-    private GoogleMap  carteMaps;
-    private Itineraire itineraire;
+
+    private GoogleMap    carteMaps;
+    private Itineraire   itineraire;
     private LieuxAdapter lieuxAdapter;
 
     private final List<Marker> markers = new ArrayList<>();
 
     private RecyclerView recyclerLieuxVisite;
-    private TextView    tvDuree;
-    private TextView    tvNbLieux;
-    private TextView    tvDepartArrivee;
-    private ProgressBar barreChargementTrace;
-    private TextView    tvChargementTrace;
+    private TextView     tvDuree;
+    private TextView     tvNbLieux;
+    private TextView     tvDepartArrivee;
+    private ProgressBar  barreChargementTrace;
+    private TextView     tvChargementTrace;
+
+    // ── Surveillance réseau ───────────────────────────────────────────────
+    private NetworkMonitor networkMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,12 +86,55 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         initCarte();
     }
 
+    // ── Cycle de vie : démarrer/arrêter le monitor réseau ─────────────────
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
+        networkMonitor.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (networkMonitor != null) {
+            networkMonitor.stop();
+        }
+    }
+
+    /**
+     * Appelé automatiquement par NetworkMonitor dès que le réseau revient.
+     * Recharge le tracé ORS sur la carte et rafraîchit les boutons "J'y suis".
+     */
+    private void onConnexionRetablie() {
+        Toast.makeText(this,
+                "Connexion rétablie — resynchronisation…",
+                Toast.LENGTH_SHORT).show();
+
+        // 1. Recharger le tracé sur la carte si elle est prête
+        List<Itineraire.LieuRef> lieux = itineraire.getLieux();
+        if (carteMaps != null && lieux != null && lieux.size() >= 2) {
+            chargerTraceOSRM(lieux);
+        }
+
+        // 2. Rafraîchir les boutons "J'y suis" dans le RecyclerView
+        if (lieuxAdapter != null) {
+            lieuxAdapter.notifyDataSetChanged();
+        }
+    }
+
+    // ── Connectivité ──────────────────────────────────────────────────────
+
     public static boolean estConnecte(Context context) {
-        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm == null) return false;
         NetworkInfo info = cm.getActiveNetworkInfo();
         return info != null && info.isConnected();
     }
+
+    // ── Initialisation ────────────────────────────────────────────────────
 
     private void initVues() {
         tvDuree              = findViewById(R.id.tvDetailItineraireDuree);
@@ -94,7 +142,6 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         tvDepartArrivee      = findViewById(R.id.tvDetailItineraireDepartArrivee);
         barreChargementTrace = findViewById(R.id.barreChargementTrace);
         tvChargementTrace    = findViewById(R.id.tvChargementTrace);
-
         recyclerLieuxVisite  = findViewById(R.id.recyclerLieuxVisite);
 
         if (recyclerLieuxVisite != null) {
@@ -144,6 +191,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         }
     }
 
+    // ── Carte ─────────────────────────────────────────────────────────────
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -168,15 +216,14 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             float couleur;
             String snippet;
             if (i == 0) {
-                couleur  = BitmapDescriptorFactory.HUE_RED;
-                snippet  = "Arrivée";
-
+                couleur = BitmapDescriptorFactory.HUE_RED;
+                snippet = "Arrivée";
             } else if (i == lieux.size() - 1) {
-                couleur  = BitmapDescriptorFactory.HUE_GREEN;
-                snippet  = "Départ";
+                couleur = BitmapDescriptorFactory.HUE_GREEN;
+                snippet = "Départ";
             } else {
-                couleur  = BitmapDescriptorFactory.HUE_AZURE;
-                snippet  = "Étape " + i;
+                couleur = BitmapDescriptorFactory.HUE_AZURE;
+                snippet = "Étape " + i;
             }
 
             carteMaps.addMarker(new MarkerOptions()
@@ -216,6 +263,8 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
         }
     }
 
+    // ── Adapter ───────────────────────────────────────────────────────────
+
     interface OnLieuClickListener {
         void onJySuis(int index);
     }
@@ -243,7 +292,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             Itineraire.LieuRef lieu = lieux.get(position);
 
             String emoji;
-            if (position == 0 ) {
+            if (position == 0) {
                 emoji = "🟢";
             } else if (position == lieux.size() - 1) {
                 emoji = "🔴";
@@ -255,23 +304,25 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
             holder.tvNom.setText(lieu.getNom() != null ? lieu.getNom() : "—");
 
             boolean aCoordonnees = lieu.getLat() != null && lieu.getLng() != null;
-            if (estConnecte(holder.itemView.getContext())){
-                holder.btnJySuis.setEnabled(aCoordonnees);
-                holder.btnJySuis.setOnClickListener(v ->{
-                    listener.onJySuis(position);
+            boolean enLigne      = estConnecte(holder.itemView.getContext());
 
+            // Le bouton n'est actif que si on est connecté ET que le lieu a des coordonnées
+            holder.btnJySuis.setEnabled(enLigne && aCoordonnees);
+            holder.btnJySuis.setAlpha(enLigne ? 1.0f : 0.4f);
+
+            holder.btnJySuis.setOnClickListener(v -> {
+                if (enLigne) {
+                    listener.onJySuis(position);
                     Intent intent = new Intent(v.getContext(), VisiteActivity.class);
                     intent.putExtra(VisiteActivity.EXTRA_LIEU_ID,  lieu.getId());
                     intent.putExtra(VisiteActivity.EXTRA_LIEU_NOM, lieu.getNom());
                     v.getContext().startActivity(intent);
-                });
-            }else {
-                holder.btnJySuis.setOnClickListener(v ->
-                        Toast.makeText(holder.itemView.getContext(),
-                                "Connexion requise",
-                                Toast.LENGTH_SHORT).show()
-                );
-            }
+                } else {
+                    Toast.makeText(holder.itemView.getContext(),
+                            "Connexion requise",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
         @Override
@@ -340,9 +391,7 @@ public class DetailItineraireActivity extends AppCompatActivity implements OnMap
                                         .width(10f)
                                         .geodesic(true));
                             }
-
-                        } catch (Exception e) {
-                        }
+                        } catch (Exception ignored) {}
                     },
                     erreur -> {
                         barreChargementTrace.setVisibility(View.GONE);

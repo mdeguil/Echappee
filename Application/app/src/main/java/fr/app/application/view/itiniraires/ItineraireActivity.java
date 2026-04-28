@@ -16,6 +16,7 @@ import java.util.List;
 import fr.app.application.R;
 import fr.app.application.controller.ItineraireController;
 import fr.app.application.model.Itineraire;
+import fr.app.application.utils.NetworkMonitor;
 import fr.app.application.view.adapter.ItineraireAdapter;
 
 public class ItineraireActivity extends AppCompatActivity {
@@ -25,8 +26,9 @@ public class ItineraireActivity extends AppCompatActivity {
     private RecyclerView       recyclerItineraires;
     private ItineraireAdapter  adaptateur;
     private ItineraireController controleur;
-
     private final List<Itineraire> listeItineraires = new ArrayList<>();
+
+    private NetworkMonitor networkMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,27 @@ public class ItineraireActivity extends AppCompatActivity {
 
         initVues();
         chargerItineraires();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
+        networkMonitor.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (networkMonitor != null) {
+            networkMonitor.stop();
+        }
+    }
+
+    private void onConnexionRetablie() {
+        Toast.makeText(this,
+                "Connexion rétablie — resynchronisation…",
+                Toast.LENGTH_SHORT).show();
     }
 
     private void initVues() {

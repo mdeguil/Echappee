@@ -7,8 +7,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -41,6 +39,7 @@ import fr.app.application.R;
 import fr.app.application.controller.LieuController;
 import fr.app.application.model.Lieu;
 import fr.app.application.utils.BDD.AppDatabase;
+import fr.app.application.utils.NetworkMonitor;
 import fr.app.application.view.adapter.LieuAdapter;
 import fr.app.application.view.itiniraires.CreerItineraireActivity;
 import fr.app.application.view.itiniraires.ItineraireActivity;
@@ -57,13 +56,14 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private ProgressBar barreChargement;
     private List<Lieu>  listeLieux         = new ArrayList<>();
     private List<Lieu>  listeLieuxComplete = new ArrayList<>();
-    private boolean     lieuxDejaCharges   = false; // évite double chargement
+    private boolean     lieuxDejaCharges   = false;
 
     private Map<Integer, Marker>    marqueurParId = new HashMap<>();
     private MaterialButton btnCreerItineraire, btnVoirItineraires, btnHistorique;
 
     private LieuController lieuController;
     private AppDatabase    db;
+    private NetworkMonitor networkMonitor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,72 +76,62 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         barreChargement    = findViewById(R.id.barreChargement);
         btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
         btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
-        btnHistorique = findViewById(R.id.btnHistorique);
+        btnHistorique      = findViewById(R.id.btnHistorique);
 
-        // ── Bouton créer itinéraire : désactivé si hors ligne ─────────────
-        boolean enLigne = estConnecte();
-        btnCreerItineraire.setEnabled(enLigne);
-        btnCreerItineraire.setAlpha(enLigne ? 1.0f : 0.4f);
-        if (enLigne) {
-            btnCreerItineraire.setOnClickListener(v ->
-                    startActivity(new Intent(this, CreerItineraireActivity.class))
-            );
-        } else {
-            btnCreerItineraire.setOnClickListener(v ->
-                    Toast.makeText(this,
-                            "Connexion requise pour créer un itinéraire",
-                            Toast.LENGTH_SHORT).show()
-            );
-        }
-
-        btnVoirItineraires.setOnClickListener(v ->
-                startActivity(new Intent(this, ItineraireActivity.class))
-        );
-
-
-        btnVoirItineraires.setOnClickListener(v -> {
-            Intent intent = new Intent(this, ItineraireActivity.class);
-            startActivity(intent);
-        });
-
-        btnHistorique.setEnabled(enLigne);
-        btnHistorique.setAlpha(enLigne ? 1.0f : 0.4f);
-        if (enLigne) {
-            btnHistorique.setOnClickListener(v ->
-                    startActivity(new Intent(this, HistoriqueVisiteActivity.class))
-            );
-        } else {
-            btnHistorique.setOnClickListener(v ->
-                    Toast.makeText(this,
-                            "Connexion requise pour voir l'historique",
-                            Toast.LENGTH_SHORT).show()
-            );
-        }
-
-
+        configurerBoutons();
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
         recyclerLieux.setLayoutManager(new LinearLayoutManager(this));
         adaptateur = new LieuAdapter(this, listeLieux, lieu -> centrerCarteOnLieu(lieu));
         recyclerLieux.setAdapter(adaptateur);
 
-        // ── Chargement immédiat des lieux (sans attendre la carte) ────────
         chargerLieux();
 
-        // ── Carte ─────────────────────────────────────────────────────────
         SupportMapFragment fragmentCarte = (SupportMapFragment)
                 getSupportFragmentManager().findFragmentById(R.id.fragmentCarte);
         if (fragmentCarte != null) {
             fragmentCarte.getMapAsync(this);
         }
 
-        // ── Recherche ─────────────────────────────────────────────────────
         EditText champRecherche = findViewById(R.id.champRecherche);
         champRecherche.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override public void afterTextChanged(Editable s) { filtrerLieux(s.toString()); }
         });
+    }
+
+    // ── Cycle de vie : démarrer/arrêter le monitor réseau ─────────────────
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        networkMonitor = new NetworkMonitor(this, this::onConnexionRetablie);
+        networkMonitor.start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (networkMonitor != null) {
+            networkMonitor.stop();
+        }
+    }
+
+    /**
+     * Appelé automatiquement par NetworkMonitor dès que le réseau revient.
+     * Resynchronise les lieux depuis l'API et met à jour les boutons.
+     */
+    private void onConnexionRetablie() {
+        Toast.makeText(this,
+                "Connexion rétablie — resynchronisation…",
+                Toast.LENGTH_SHORT).show();
+
+        // Remettre les boutons en état connecté
+        configurerBoutons();
+
+        // Recharger les lieux depuis l'API (pas le fallback BDD)
+        chargerLieux();
     }
 
     // ── Connectivité ──────────────────────────────────────────────────────
@@ -154,11 +144,44 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         return info != null && info.isConnected();
     }
 
+    // ── Configuration des boutons selon l'état réseau ─────────────────────
+
+    private void configurerBoutons() {
+        boolean enLigne = estConnecte();
+
+        btnCreerItineraire.setEnabled(enLigne);
+        btnCreerItineraire.setAlpha(enLigne ? 1.0f : 0.4f);
+        btnCreerItineraire.setOnClickListener(v -> {
+            if (enLigne) {
+                startActivity(new Intent(this, CreerItineraireActivity.class));
+            } else {
+                Toast.makeText(this,
+                        "Connexion requise pour créer un itinéraire",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnVoirItineraires.setOnClickListener(v ->
+                startActivity(new Intent(this, ItineraireActivity.class))
+        );
+
+        btnHistorique.setEnabled(enLigne);
+        btnHistorique.setAlpha(enLigne ? 1.0f : 0.4f);
+        btnHistorique.setOnClickListener(v -> {
+            if (enLigne) {
+                startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+            } else {
+                Toast.makeText(this,
+                        "Connexion requise pour voir l'historique",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     // ── Chargement des lieux ──────────────────────────────────────────────
 
     /**
      * Charge les lieux via LieuController (API → fallback BDD si hors ligne).
-     * Appelé dès onCreate, sans attendre la carte.
      */
     private void chargerLieux() {
         barreChargement.setVisibility(View.VISIBLE);
@@ -174,7 +197,6 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
                 barreChargement.setVisibility(View.GONE);
                 lieuxDejaCharges = true;
 
-                // Ajouter les marqueurs si la carte est déjà prête
                 if (carteMaps != null) {
                     carteMaps.clear();
                     marqueurParId.clear();
@@ -216,12 +238,9 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
 
         activerPositionUtilisateur();
 
-        // Si les lieux sont déjà chargés (chargerLieux() plus rapide que la carte),
-        // on place les marqueurs maintenant
         if (lieuxDejaCharges && !listeLieuxComplete.isEmpty()) {
             for (Lieu lieu : listeLieuxComplete) ajouterMarqueurSurCarte(lieu);
         }
-        // Sinon, chargerLieux() s'en chargera quand il recevra la réponse
     }
 
     // ── Filtrage ──────────────────────────────────────────────────────────
