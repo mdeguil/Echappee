@@ -1,5 +1,6 @@
 package fr.app.application.view.itiniraires;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -18,6 +19,8 @@ import fr.app.application.controller.ItineraireController;
 import fr.app.application.model.Itineraire;
 import fr.app.application.utils.NetworkMonitor;
 import fr.app.application.view.adapter.ItineraireAdapter;
+import fr.app.application.view.lieux.ListeLieuxActivity;
+import fr.app.application.view.visite.HistoriqueVisiteActivity;
 
 public class ItineraireActivity extends AppCompatActivity {
 
@@ -27,6 +30,8 @@ public class ItineraireActivity extends AppCompatActivity {
     private ItineraireAdapter  adaptateur;
     private ItineraireController controleur;
     private final List<Itineraire> listeItineraires = new ArrayList<>();
+
+    private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +47,7 @@ public class ItineraireActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         initVues();
+        configurerBottomNav();
         chargerItineraires();
     }
 
@@ -50,13 +56,44 @@ public class ItineraireActivity extends AppCompatActivity {
         barreChargement       = findViewById(R.id.barreChargementItineraire);
         layoutAucunItineraire = findViewById(R.id.layoutAucunItineraire);
         recyclerItineraires   = findViewById(R.id.recyclerItineraires);
+        bottomNavigationView  = findViewById(R.id.bottomNavigationView);
 
         recyclerItineraires.setLayoutManager(new LinearLayoutManager(this));
-
         adaptateur = new ItineraireAdapter(this, listeItineraires, this::supprimerItineraire);
         recyclerItineraires.setAdapter(adaptateur);
 
         controleur = new ItineraireController(this);
+    }
+
+    private void configurerBottomNav() {
+        // Sélectionner l'onglet courant
+        bottomNavigationView.setSelectedItemId(R.id.nav_liste_itineraires);
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_liste_itineraires) {
+                // Déjà sur cette page
+                return true;
+
+            } else if (id == R.id.nav_liste_lieux) {
+                startActivity(new Intent(this, ListeLieuxActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_creer_itineraire) {
+                startActivity(new Intent(this, CreerItineraireActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_historique) {
+                startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+                finish();
+                return true;
+            }
+
+            return false;
+        });
     }
 
     private void chargerItineraires() {

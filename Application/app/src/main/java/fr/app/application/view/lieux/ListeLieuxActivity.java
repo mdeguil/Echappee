@@ -25,7 +25,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +55,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private boolean     lieuxDejaCharges   = false;
 
     private Map<Integer, Marker> marqueurParId = new HashMap<>();
-    private MaterialButton btnCreerItineraire, btnVoirItineraires, btnHistorique;
+    private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
 
     private LieuController lieuController;
     private AppDatabase    db;
@@ -87,10 +86,7 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
         lieuController = new LieuController(this);
 
         barreChargement    = findViewById(R.id.barreChargement);
-        btnCreerItineraire = findViewById(R.id.btnCreerItineraire);
-        btnVoirItineraires = findViewById(R.id.btnVoirItineraires);
-        btnHistorique      = findViewById(R.id.btnHistorique);
-
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
         configurerBoutons();
 
         RecyclerView recyclerLieux = findViewById(R.id.recyclerLieux);
@@ -131,22 +127,43 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
     private void configurerBoutons() {
         boolean enLigne = estConnecte();
 
-        btnCreerItineraire.setEnabled(enLigne);
-        btnCreerItineraire.setAlpha(enLigne ? 1.0f : 0.4f);
-        btnCreerItineraire.setOnClickListener(v -> {
-            if (enLigne) startActivity(new Intent(this, CreerItineraireActivity.class));
-            else Toast.makeText(this, "Connexion requise pour créer un itinéraire", Toast.LENGTH_SHORT).show();
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_liste_lieux) {
+                // On est déjà sur cette page, ne rien faire
+                return true;
+
+            } else if (id == R.id.nav_creer_itineraire) {
+                if (enLigne) {
+                    startActivity(new Intent(this, CreerItineraireActivity.class));
+                } else {
+                    Toast.makeText(this, "Connexion requise pour créer un itinéraire", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+
+            } else if (id == R.id.nav_liste_itineraires) {
+                startActivity(new Intent(this, ItineraireActivity.class));
+                return true;
+
+            } else if (id == R.id.nav_historique) {
+                if (enLigne) {
+                    startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+                } else {
+                    Toast.makeText(this, "Connexion requise pour voir l'historique", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+
+            return false;
         });
 
-        btnVoirItineraires.setOnClickListener(v ->
-                startActivity(new Intent(this, ItineraireActivity.class)));
+        // Griser les items indisponibles hors ligne
+        bottomNavigationView.getMenu().findItem(R.id.nav_creer_itineraire).setEnabled(enLigne);
+        bottomNavigationView.getMenu().findItem(R.id.nav_historique).setEnabled(enLigne);
 
-        btnHistorique.setEnabled(enLigne);
-        btnHistorique.setAlpha(enLigne ? 1.0f : 0.4f);
-        btnHistorique.setOnClickListener(v -> {
-            if (enLigne) startActivity(new Intent(this, HistoriqueVisiteActivity.class));
-            else Toast.makeText(this, "Connexion requise pour voir l'historique", Toast.LENGTH_SHORT).show();
-        });
+        // Sélectionner l'onglet courant
+        bottomNavigationView.setSelectedItemId(R.id.nav_liste_lieux);
     }
 
     private void chargerLieux() {

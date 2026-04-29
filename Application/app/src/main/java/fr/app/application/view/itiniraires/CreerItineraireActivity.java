@@ -1,6 +1,7 @@
 package fr.app.application.view.itiniraires;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -37,6 +38,8 @@ import fr.app.application.model.Itineraire;
 import fr.app.application.model.Lieu;
 import fr.app.application.utils.DirectionsUtils;
 import fr.app.application.view.adapter.LieuSelectionneAdapter;
+import fr.app.application.view.lieux.ListeLieuxActivity;
+import fr.app.application.view.visite.HistoriqueVisiteActivity;
 
 public class CreerItineraireActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -57,6 +60,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     private LieuSelectionneAdapter adaptateur;
     private LieuController         lieuController;
     private ItineraireController   itineraireController;
+
+    private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +93,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
 
         btnCreer.setEnabled(false);
         btnCreer.setOnClickListener(v -> creerItineraire());
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
+        configurerBottomNav();
         mettreAJourDuree();
     }
 
@@ -375,5 +382,34 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void configurerBottomNav() {
+        bottomNavigationView.setSelectedItemId(R.id.nav_creer_itineraire);
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_creer_itineraire) {
+                return true;
+
+            } else if (id == R.id.nav_liste_lieux) {
+                startActivity(new Intent(this, ListeLieuxActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_liste_itineraires) {
+                startActivity(new Intent(this, ItineraireActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_historique) {
+                startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+                finish();
+                return true;
+            }
+
+            return false;
+        });
     }
 }
