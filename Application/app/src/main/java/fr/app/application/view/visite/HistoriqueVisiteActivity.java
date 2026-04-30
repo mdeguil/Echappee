@@ -1,5 +1,6 @@
 package fr.app.application.view.visite;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,6 +21,9 @@ import fr.app.application.R;
 import fr.app.application.controller.VisiteController;
 import fr.app.application.model.Visite;
 import fr.app.application.view.adapter.HistoriqueVisiteAdapter;
+import fr.app.application.view.itiniraires.CreerItineraireActivity;
+import fr.app.application.view.itiniraires.ItineraireActivity;
+import fr.app.application.view.lieux.ListeLieuxActivity;
 
 public class HistoriqueVisiteActivity extends AppCompatActivity {
 
@@ -28,6 +32,9 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
     private RecyclerView   recyclerVisites;
     private HistoriqueVisiteAdapter adapter;
     private VisiteController visiteController;
+
+    private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
+
 
     private final List<Visite> visites = new ArrayList<>();
 
@@ -44,20 +51,50 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
         visiteController = new VisiteController(this);
 
         initVues();
+        configurerBottomNav();
         chargerVisites();
     }
 
     private void initVues() {
-        barreChargement = findViewById(R.id.barreChargement);
-        tvAucuneVisite  = findViewById(R.id.tvAucuneVisite);
-        recyclerVisites = findViewById(R.id.recyclerVisites);
+        barreChargement      = findViewById(R.id.barreChargement);
+        tvAucuneVisite       = findViewById(R.id.tvAucuneVisite);
+        recyclerVisites      = findViewById(R.id.recyclerVisites);
+        bottomNavigationView = findViewById(R.id.bottomNavigationView);
 
         recyclerVisites.setLayoutManager(new LinearLayoutManager(this));
         adapter = new HistoriqueVisiteAdapter(visites, this::supprimerVisite);
         recyclerVisites.setAdapter(adapter);
+    }
 
-        MaterialButton btnRetour = findViewById(R.id.btnRetour);
-        btnRetour.setOnClickListener(v -> finish());
+    private void configurerBottomNav() {
+        // Sélectionner l'onglet courant
+        bottomNavigationView.setSelectedItemId(R.id.nav_historique);
+
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.nav_historique) {
+                // Déjà sur cette page
+                return true;
+
+            } else if (id == R.id.nav_liste_lieux) {
+                startActivity(new Intent(this, ListeLieuxActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_creer_itineraire) {
+                startActivity(new Intent(this, CreerItineraireActivity.class));
+                finish();
+                return true;
+
+            } else if (id == R.id.nav_liste_itineraires) {
+                startActivity(new Intent(this, ItineraireActivity.class));
+                finish();
+                return true;
+            }
+
+            return false;
+        });
     }
 
     private void chargerVisites() {

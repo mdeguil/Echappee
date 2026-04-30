@@ -7,7 +7,7 @@
     android:orientation="vertical"
     android:background="?attr/colorSurface">
 
-    <!-- ── Carte : 55% de l'écran ── -->
+    <!-- Carte : 55% de l'écran -->
     <fragment
         android:id="@+id/fragmentCarteCreer"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -15,7 +15,7 @@
         android:layout_height="0dp"
         android:layout_weight="55" />
 
-    <!-- ── Panneau bas : 45% de l'écran ── -->
+    <!-- Panneau bas : 45% de l'écran -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -62,7 +62,8 @@
         <TextView
             android:id="@+id/tvAucunLieuSelectionne"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:text="Aucun lieu sélectionné\nAppuyez sur un marqueur pour l'ajouter"
             android:gravity="center"
             android:padding="16dp"
@@ -85,9 +86,20 @@
             android:id="@+id/btnCreerItineraire"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="8dp"
             android:text="Créer l'itinéraire"
             android:enabled="false" />
+
+        <!-- Menu de navigation bas -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurface"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
 
     </LinearLayout>
 
