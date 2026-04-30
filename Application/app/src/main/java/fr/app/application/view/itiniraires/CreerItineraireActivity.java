@@ -36,7 +36,10 @@ import fr.app.application.controller.ItineraireController;
 import fr.app.application.controller.LieuController;
 import fr.app.application.model.Itineraire;
 import fr.app.application.model.Lieu;
+import fr.app.application.model.Utilisateur;
+import fr.app.application.utils.BDD.AppDatabase;
 import fr.app.application.utils.DirectionsUtils;
+import fr.app.application.utils.SessionManager;
 import fr.app.application.view.adapter.LieuSelectionneAdapter;
 import fr.app.application.view.lieux.ListeLieuxActivity;
 import fr.app.application.view.visite.HistoriqueVisiteActivity;
@@ -303,28 +306,30 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     private void creerItineraire() {
         if (lieuxSelectionnes.isEmpty()) return;
 
+        SessionManager session = new SessionManager(this);
+        int idUtilisateur = session.getUserId();
+
+        if (idUtilisateur <= 0) {
+            Toast.makeText(this, "Erreur : Session corrompue (ID 0). Déconnectez-vous et reconnectez-vous.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         btnCreer.setEnabled(false);
         barreChargement.setVisibility(View.VISIBLE);
 
         int dureTotal = dureeCalculeeMinutes != null ? dureeCalculeeMinutes : 0;
-
         List<Integer> idLieux = new ArrayList<>();
         for (Lieu lieu : lieuxSelectionnes) {
             idLieux.add(lieu.getId());
         }
 
-        itineraireController.creerItineraire(dureTotal, idLieux,
+        // Envoi au controller
+        itineraireController.creerItineraire(dureTotal, idLieux, idUtilisateur,
                 new ItineraireController.CallbackCreerItineraire() {
                     @Override
                     public void onSucces(Itineraire itineraire) {
                         barreChargement.setVisibility(View.GONE);
-                        String dureeAffichee = dureTotal > 0
-                                ? formatDuree(dureTotal)
-                                : "durée inconnue";
-                        Toast.makeText(CreerItineraireActivity.this,
-                                "Itinéraire créé ! " + lieuxSelectionnes.size()
-                                        + " lieux — " + dureeAffichee + " à pied",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(CreerItineraireActivity.this, "Itinéraire créé !", Toast.LENGTH_SHORT).show();
                         finish();
                     }
 
@@ -332,9 +337,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
                     public void onErreur(String messageErreur) {
                         barreChargement.setVisibility(View.GONE);
                         btnCreer.setEnabled(true);
-                        Toast.makeText(CreerItineraireActivity.this,
-                                "Erreur : " + messageErreur,
-                                Toast.LENGTH_LONG).show();
+                        // On affiche l'erreur réelle pour débugger
+                        Toast.makeText(CreerItineraireActivity.this, "Erreur API : " + messageErreur, Toast.LENGTH_LONG).show();
                     }
                 });
     }

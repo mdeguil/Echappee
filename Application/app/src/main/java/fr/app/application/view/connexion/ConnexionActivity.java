@@ -185,16 +185,15 @@ public class ConnexionActivity extends AppCompatActivity {
                 if (json.has("token")) {
                     String token = json.getString("token");
 
-                    // Tenter d'extraire l'userId du JWT (facultatif)
                     int userId = extraireUserIdDuToken(token);
-                    Log.d(TAG, "Login OK — userId extrait du JWT : " + userId);
 
-                    // Sauvegarder la session (token suffit pour isLoggedIn)
+                    if (userId == 0) {
+                        Log.w(TAG, "ID non trouvé dans le JWT, utilisation de l'ID par défaut (1)");
+                        userId = 1;
+                    }
+
                     sessionManager.saveSession(token, userId, email);
-
-                    // Sauvegarder l'utilisateur en BDD locale (thread background)
                     sauvegarderUtilisateurEnBDD(userId, email, mdp, token);
-
                     navigateToMain();
                 } else {
                     showError("Clé 'token' absente de la réponse");

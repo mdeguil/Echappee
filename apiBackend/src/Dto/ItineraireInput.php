@@ -9,4 +9,6 @@ class ItineraireInput
      * @var int[]
      */
     public array $listeLieux = [];
+
+    public int $utilisateur;
 }

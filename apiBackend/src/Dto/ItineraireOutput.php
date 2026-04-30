@@ -6,4 +6,6 @@ class ItineraireOutput
     public int $id;
     public int $dureTotal;
     public array $listeLieux = [];
+
+    public int $utilisateur;
 }

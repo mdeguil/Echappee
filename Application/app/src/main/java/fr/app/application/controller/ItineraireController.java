@@ -3,6 +3,7 @@ package fr.app.application.controller;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -111,38 +112,49 @@ public class ItineraireController {
     /**
      * Crée un itinéraire via l'API et le sauvegarde localement.
      */
-    public void creerItineraire(int dureTotal, List<Integer> idLieux,
-                                CallbackCreerItineraire callback) {
+    public void creerItineraire(int dureTotal, List<Integer> idLieux, int idUtilisateur, CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
         try {
             JSONObject body = new JSONObject();
             body.put("dureTotal", dureTotal);
+
             JSONArray lieuxArray = new JSONArray();
-            for (int id : idLieux) lieuxArray.put(id);
+            for (int id : idLieux) {
+                lieuxArray.put(id);
+            }
             body.put("listeLieux", lieuxArray);
+
+            // Ce champ "utilisateur" correspond à la propriété dans ton DTO PHPFf
+            body.put("utilisateur", idUtilisateur);
 
             JsonObjectRequest requete = new JsonObjectRequest(
                     Request.Method.POST, url, body,
                     reponse -> {
                         try {
                             Itineraire itineraire = gson.fromJson(reponse.toString(), Itineraire.class);
-                            // Sauvegarder localement
-                            int userId = session.getUserId();
-                            itineraire.setUserId(userId);
+                            // Sauvegarde locale optionnelle pour le mode offline
                             new Thread(() -> db.myDao().insertItineraire(itineraire)).start();
                             callback.onSucces(itineraire);
                         } catch (Exception e) {
-                            callback.onErreur("Erreur de parsing : " + e.getMessage());
+                            callback.onErreur("Erreur parsing : " + e.getMessage());
                         }
                     },
-                    erreur -> callback.onErreur("Erreur réseau : " + erreur.getMessage())
+                    erreur -> {
+                        if (erreur.networkResponse != null && erreur.networkResponse.data != null) {
+                            String errorMsg = new String(erreur.networkResponse.data);
+                            Log.e("SymphonyError", errorMsg);
+                            callback.onErreur(errorMsg);
+                        } else {
+                            callback.onErreur("Erreur réseau inconnue");
+                        }
+                    }
             );
 
             VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
 
         } catch (Exception e) {
-            callback.onErreur("Erreur construction requête : " + e.getMessage());
+            callback.onErreur("Erreur JSON : " + e.getMessage());
         }
     }
 
