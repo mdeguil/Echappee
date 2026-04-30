@@ -45,16 +45,14 @@ class Itiniraire
     #[ORM\OneToMany(targetEntity: ListeLieux::class, mappedBy: 'idItiniraire', cascade: ['persist'])]
     private Collection $listeLieux;
 
-    /**
-     * @var Collection<int, ListeUtilisateur>
-     */
-    #[ORM\OneToMany(targetEntity: ListeUtilisateur::class, mappedBy: 'idItiniraire')]
-    private Collection $listeUtilisateurs;
+    #[ORM\ManyToOne(inversedBy: 'listeItiniraire')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Utilisateur $utilisateur = null;
+
 
     public function __construct()
     {
         $this->listeLieux = new ArrayCollection();
-        $this->listeUtilisateurs = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -104,32 +102,14 @@ class Itiniraire
         return $this;
     }
 
-    /**
-     * @return Collection<int, ListeUtilisateur>
-     */
-    public function getListeUtilisateurs(): Collection
+    public function getUtilisateur(): ?Utilisateur
     {
-        return $this->listeUtilisateurs;
+        return $this->utilisateur;
     }
 
-    public function addListeUtilisateur(ListeUtilisateur $listeUtilisateur): static
+    public function setUtilisateur(?Utilisateur $utilisateur): static
     {
-        if (!$this->listeUtilisateurs->contains($listeUtilisateur)) {
-            $this->listeUtilisateurs->add($listeUtilisateur);
-            $listeUtilisateur->setIdItiniraire($this);
-        }
-
-        return $this;
-    }
-
-    public function removeListeUtilisateur(ListeUtilisateur $listeUtilisateur): static
-    {
-        if ($this->listeUtilisateurs->removeElement($listeUtilisateur)) {
-            // set the owning side to null (unless already changed)
-            if ($listeUtilisateur->getIdItiniraire() === $this) {
-                $listeUtilisateur->setIdItiniraire(null);
-            }
-        }
+        $this->utilisateur = $utilisateur;
 
         return $this;
     }

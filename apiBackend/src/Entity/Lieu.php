@@ -9,6 +9,8 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Dto\LieuListe;
 use App\Repository\LieuRepository;
 use App\State\Provider\LieuListeProvider;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LieuRepository::class)]
@@ -62,8 +64,17 @@ class Lieu
     #[ORM\JoinColumn(nullable: false)]
     private ?DetailLieu $detail = null;
 
-    #[ORM\ManyToOne(inversedBy: 'lieu')]
-    private ?Commentaire $commentaires = null;
+    /**
+     * @var Collection<int, Commentaire>
+     */
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'lieu')]
+    private Collection $listeCommentaires;
+
+    public function __construct()
+    {
+        $this->listeCommentaires = new ArrayCollection();
+    }
+
 
     public function getId(): ?int { return $this->id; }
 
@@ -88,6 +99,34 @@ class Lieu
     public function getDetail(): ?DetailLieu { return $this->detail; }
     public function setDetail(DetailLieu $detail): static { $this->detail = $detail; return $this; }
 
-    public function getCommentaires(): ?Commentaire { return $this->commentaires; }
-    public function setCommentaires(?Commentaire $commentaires): static { $this->commentaires = $commentaires; return $this; }
+    /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getListeCommentaires(): Collection
+    {
+        return $this->listeCommentaires;
+    }
+
+    public function addListeCommentaire(Commentaire $listeCommentaire): static
+    {
+        if (!$this->listeCommentaires->contains($listeCommentaire)) {
+            $this->listeCommentaires->add($listeCommentaire);
+            $listeCommentaire->setLieu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListeCommentaire(Commentaire $listeCommentaire): static
+    {
+        if ($this->listeCommentaires->removeElement($listeCommentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($listeCommentaire->getLieu() === $this) {
+                $listeCommentaire->setLieu(null);
+            }
+        }
+
+        return $this;
+    }
+
 }

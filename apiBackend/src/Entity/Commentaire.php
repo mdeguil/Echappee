@@ -41,24 +41,20 @@ class Commentaire
     #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?string $message = null;
 
-    /**
-     * @var Collection<int, Lieu>
-     */
-    #[ORM\OneToMany(targetEntity: Lieu::class, mappedBy: 'commentaires')]
-    #[Groups(['commentaire:read', 'visite:read'])]
-    private Collection $lieu;
-
-    /**
-     * @var Collection<int, Utilisateur>
-     */
-    #[ORM\OneToMany(targetEntity: Utilisateur::class, mappedBy: 'commentaires')]
-    private Collection $utilisateur;
 
     /**
      * @var Collection<int, Visite>
      */
     #[ORM\OneToMany(targetEntity: Visite::class, mappedBy: 'commentaires')]
     private Collection $visite;
+
+    #[ORM\ManyToOne(inversedBy: 'listeCommentaires')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Lieu $lieu = null;
+
+    #[ORM\ManyToOne(inversedBy: 'listeCommentaires')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Utilisateur $utilisateur = null;
 
     public function __construct()
     {
@@ -97,66 +93,6 @@ class Commentaire
     }
 
     /**
-     * @return Collection<int, Lieu>
-     */
-    public function getLieu(): Collection
-    {
-        return $this->lieu;
-    }
-
-    public function addLieu(Lieu $lieu): static
-    {
-        if (!$this->lieu->contains($lieu)) {
-            $this->lieu->add($lieu);
-            $lieu->setCommentaires($this);
-        }
-
-        return $this;
-    }
-
-    public function removeLieu(Lieu $lieu): static
-    {
-        if ($this->lieu->removeElement($lieu)) {
-            // set the owning side to null (unless already changed)
-            if ($lieu->getCommentaires() === $this) {
-                $lieu->setCommentaires(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Utilisateur>
-     */
-    public function getUtilisateur(): Collection
-    {
-        return $this->utilisateur;
-    }
-
-    public function addUtilisateur(Utilisateur $utilisateur): static
-    {
-        if (!$this->utilisateur->contains($utilisateur)) {
-            $this->utilisateur->add($utilisateur);
-            $utilisateur->setCommentaires($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUtilisateur(Utilisateur $utilisateur): static
-    {
-        if ($this->utilisateur->removeElement($utilisateur)) {
-            // set the owning side to null (unless already changed)
-            if ($utilisateur->getCommentaires() === $this) {
-                $utilisateur->setCommentaires(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, Visite>
      */
     public function getVisite(): Collection
@@ -182,6 +118,30 @@ class Commentaire
                 $visite->setCommentaires(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getLieu(): ?Lieu
+    {
+        return $this->lieu;
+    }
+
+    public function setLieu(?Lieu $lieu): static
+    {
+        $this->lieu = $lieu;
+
+        return $this;
+    }
+
+    public function getUtilisateur(): ?Utilisateur
+    {
+        return $this->utilisateur;
+    }
+
+    public function setUtilisateur(?Utilisateur $utilisateur): static
+    {
+        $this->utilisateur = $utilisateur;
 
         return $this;
     }

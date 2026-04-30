@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\Post;
 use App\Repository\UtilisateurRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -38,6 +40,24 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    /**
+     * @var Collection<int, Itiniraire>
+     */
+    #[ORM\OneToMany(targetEntity: Itiniraire::class, mappedBy: 'utilisateur')]
+    private Collection $listeItiniraire;
+
+    /**
+     * @var Collection<int, Commentaire>
+     */
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'utilisateur')]
+    private Collection $listeCommentaires;
+
+    public function __construct()
+    {
+        $this->listeItiniraire = new ArrayCollection();
+        $this->listeCommentaires = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -118,5 +138,65 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    /**
+     * @return Collection<int, Itiniraire>
+     */
+    public function getListeItiniraire(): Collection
+    {
+        return $this->listeItiniraire;
+    }
+
+    public function addListeItiniraire(Itiniraire $listeItiniraire): static
+    {
+        if (!$this->listeItiniraire->contains($listeItiniraire)) {
+            $this->listeItiniraire->add($listeItiniraire);
+            $listeItiniraire->setUtilisateur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListeItiniraire(Itiniraire $listeItiniraire): static
+    {
+        if ($this->listeItiniraire->removeElement($listeItiniraire)) {
+            // set the owning side to null (unless already changed)
+            if ($listeItiniraire->getUtilisateur() === $this) {
+                $listeItiniraire->setUtilisateur(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Commentaire>
+     */
+    public function getListeCommentaires(): Collection
+    {
+        return $this->listeCommentaires;
+    }
+
+    public function addListeCommentaire(Commentaire $listeCommentaire): static
+    {
+        if (!$this->listeCommentaires->contains($listeCommentaire)) {
+            $this->listeCommentaires->add($listeCommentaire);
+            $listeCommentaire->setUtilisateur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeListeCommentaire(Commentaire $listeCommentaire): static
+    {
+        if ($this->listeCommentaires->removeElement($listeCommentaire)) {
+            // set the owning side to null (unless already changed)
+            if ($listeCommentaire->getUtilisateur() === $this) {
+                $listeCommentaire->setUtilisateur(null);
+            }
+        }
+
+        return $this;
     }
 }
