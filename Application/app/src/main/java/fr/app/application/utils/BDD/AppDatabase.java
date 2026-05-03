@@ -16,7 +16,7 @@ import fr.app.application.model.Utilisateur;
 
 @Database(
         entities = {Lieu.class, Itineraire.class, Utilisateur.class, DetailLieux.class},
-        version = 2,
+        version = 3,
         exportSchema = false
 )
 @TypeConverters(Converters.class)

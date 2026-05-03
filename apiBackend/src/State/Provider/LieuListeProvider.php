@@ -27,7 +27,6 @@ final class LieuListeProvider implements ProviderInterface
                 'latitude'    => $lieu->getLatitude(),
                 'longitude'   => $lieu->getLongitude(),
                 'categorie'   => $lieu->getCategorie()?->getNom(),
-                'commentaire' => $lieu->getCommentaires()?->getMessage(),
             ],
             $lieux
         );
