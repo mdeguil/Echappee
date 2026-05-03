@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -219,6 +220,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
     }
 
     private void recalculerDuree() {
+        Log.d("DEBUG", "recalculerDuree appelé, nb lieux : " + lieuxSelectionnes.size());
+
         if (lieuxSelectionnes.isEmpty()) {
             dureeCalculeeMinutes = null;
             mettreAJourDuree();
@@ -230,6 +233,8 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
             mettreAJourDuree();
             return;
         }
+
+        Log.d("DEBUG", "Lancement DirectionsUtils...");
 
         tvDureeCalculee.setText("Calcul du trajet en cours...");
         btnCreer.setEnabled(false);
@@ -324,7 +329,7 @@ public class CreerItineraireActivity extends AppCompatActivity implements OnMapR
         }
 
         // Envoi au controller
-        itineraireController.creerItineraire(dureTotal, idLieux, idUtilisateur,
+        itineraireController.creerItineraire(dureTotal, idLieux,
                 new ItineraireController.CallbackCreerItineraire() {
                     @Override
                     public void onSucces(Itineraire itineraire) {

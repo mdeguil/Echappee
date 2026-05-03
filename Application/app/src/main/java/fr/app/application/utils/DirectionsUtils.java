@@ -1,21 +1,24 @@
 package fr.app.application.utils;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-
-import com.android.volley.Request;
-import com.android.volley.toolbox.JsonObjectRequest;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
 import fr.app.application.model.Lieu;
 
 public class DirectionsUtils {
 
-    private static final String TAG = "DirectionsUtils";
+    private static final String TAG      = "DirectionsUtils";
     private static final String BASE_URL = "https://router.project-osrm.org/route/v1/foot/";
 
     public interface CallbackDuree {
@@ -23,9 +26,6 @@ public class DirectionsUtils {
         void onErreur(String messageErreur);
     }
 
-    /**
-     * Calcule la durée totale estimée d'un itinéraire à pied en interrogeant l'API OSRM.
-     */
     public static void calculerDureeAPied(
             Context contexte,
             List<Lieu> lieux,
@@ -52,51 +52,70 @@ public class DirectionsUtils {
                     .append(lieu.getLatitude());
         }
 
-        String url = BASE_URL + coordsBuilder + "?overview=false";
-        Log.d(TAG, "Requête OSRM : " + url);
+        String urlStr = BASE_URL + coordsBuilder + "?overview=false";
+        Log.d(TAG, "Requête OSRM : " + urlStr);
 
-        JsonObjectRequest requete = new JsonObjectRequest(
-                Request.Method.GET,
-                url,
-                null,
-                reponse -> {
-                    try {
-                        String code = reponse.getString("code");
+        Handler mainHandler = new Handler(Looper.getMainLooper());
 
-                        if (!"Ok".equals(code)) {
-                            callback.onErreur("OSRM erreur : " + code);
-                            return;
-                        }
+        // HttpURLConnection dans un thread séparé — aucun intercepteur Volley
+        new Thread(() -> {
+            HttpURLConnection connection = null;
+            try {
+                URL url = new URL(urlStr);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(15_000);
+                connection.setReadTimeout(15_000);
+                // Aucun header Authorization — uniquement Accept
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 
-                        JSONArray routes = reponse.getJSONArray("routes");
-                        JSONObject route = routes.getJSONObject(0);
+                int statusCode = connection.getResponseCode();
+                Log.d(TAG, "Status code OSRM : " + statusCode);
 
-                        double dureeSecondesBrute = route.getDouble("duration");
-                        double dureeMinutesBrute = dureeSecondesBrute / 60.0;
+                if (statusCode != 200) {
+                    mainHandler.post(() -> callback.onErreur("OSRM HTTP " + statusCode));
+                    return;
+                }
 
-                        double facteurAjuste;
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(connection.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line);
+                reader.close();
 
-                        if (dureeMinutesBrute < 6.0) {
-                            facteurAjuste = 4.0;
-                        } else {
-                            facteurAjuste = 5.7;
-                        }
+                String reponseStr = sb.toString();
+                Log.d(TAG, "Réponse OSRM : " + reponseStr);
 
-                        int dureeFinalMinutes = (int) Math.ceil(dureeMinutesBrute * facteurAjuste);
+                JSONObject reponse = new JSONObject(reponseStr);
+                String code = reponse.getString("code");
 
-                        Log.d(TAG, "Durée brute OSRM : " + dureeMinutesBrute + " min");
-                        Log.d(TAG, "Facteur appliqué : " + facteurAjuste);
-                        Log.d(TAG, "Durée finale affichée : " + dureeFinalMinutes + " min");
+                if (!"Ok".equals(code)) {
+                    mainHandler.post(() -> callback.onErreur("OSRM erreur : " + code));
+                    return;
+                }
 
-                        callback.onSucces(dureeFinalMinutes);
+                JSONArray routes = reponse.getJSONArray("routes");
+                JSONObject route = routes.getJSONObject(0);
 
-                    } catch (Exception e) {
-                        callback.onErreur("Erreur parsing OSRM : " + e.getMessage());
-                    }
-                },
-                erreur -> callback.onErreur("Erreur réseau OSRM : " + erreur.getMessage())
-        );
+                double dureeSecondesBrute = route.getDouble("duration");
+                double dureeMinutesBrute  = dureeSecondesBrute / 60.0;
+                double facteurAjuste      = dureeMinutesBrute < 6.0 ? 4.0 : 5.7;
+                int dureeFinalMinutes     = (int) Math.ceil(dureeMinutesBrute * facteurAjuste);
 
-        VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
+                Log.d(TAG, "Durée brute OSRM : "     + dureeMinutesBrute + " min");
+                Log.d(TAG, "Facteur appliqué : "      + facteurAjuste);
+                Log.d(TAG, "Durée finale affichée : " + dureeFinalMinutes + " min");
+
+                mainHandler.post(() -> callback.onSucces(dureeFinalMinutes));
+
+            } catch (Exception e) {
+                Log.e(TAG, "Erreur : " + e.getMessage());
+                mainHandler.post(() -> callback.onErreur("Erreur OSRM : " + e.getMessage()));
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }).start();
     }
 }

@@ -14,7 +14,9 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import fr.app.application.model.Itineraire;
 import fr.app.application.model.reponse.ReponseItineraires;
@@ -55,7 +57,18 @@ public class ItineraireController {
     }
 
     /**
-     * Récupère les itinéraires depuis l'API et les sauvegarde en BDD.
+     * Retourne les headers d'authentification JWT communs à toutes les requêtes.
+     */
+    private Map<String, String> getAuthHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", "Bearer " + session.getToken());
+        headers.put("Content-Type", "application/json");
+        return headers;
+    }
+
+    /**
+     * Récupère les itinéraires de l'utilisateur connecté depuis l'API.
+     * Le filtrage par utilisateur est géré côté Symfony via le JWT.
      * En cas d'erreur réseau, retourne les itinéraires locaux de l'utilisateur courant.
      */
     public void recupererItineraires(CallbackItineraires callback) {
@@ -78,7 +91,7 @@ public class ItineraireController {
                         if (liste != null) {
                             final List<Itineraire> finalListe = liste;
                             int userId = session.getUserId();
-                            // Associer l'userId avant la sauvegarde
+                            // Associer l'userId avant la sauvegarde locale
                             for (Itineraire it : finalListe) it.setUserId(userId);
 
                             new Thread(() -> db.myDao().insertItineraires(finalListe)).start();
@@ -104,15 +117,21 @@ public class ItineraireController {
                         }
                     }).start();
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                return getAuthHeaders();
+            }
+        };
 
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
     /**
      * Crée un itinéraire via l'API et le sauvegarde localement.
+     * L'utilisateur est déduit du JWT côté Symfony — ne pas l'envoyer dans le body.
      */
-    public void creerItineraire(int dureTotal, List<Integer> idLieux, int idUtilisateur, CallbackCreerItineraire callback) {
+    public void creerItineraire(int dureTotal, List<Integer> idLieux, CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
 
         try {
@@ -125,15 +144,15 @@ public class ItineraireController {
             }
             body.put("listeLieux", lieuxArray);
 
-            // Ce champ "utilisateur" correspond à la propriété dans ton DTO PHPFf
-            body.put("utilisateur", idUtilisateur);
+            // Ne pas envoyer "utilisateur" dans le body :
+            // Symfony récupère l'utilisateur connecté via $this->getUser() grâce au JWT.
 
             JsonObjectRequest requete = new JsonObjectRequest(
                     Request.Method.POST, url, body,
                     reponse -> {
                         try {
                             Itineraire itineraire = gson.fromJson(reponse.toString(), Itineraire.class);
-                            // Sauvegarde locale optionnelle pour le mode offline
+                            itineraire.setUserId(session.getUserId());
                             new Thread(() -> db.myDao().insertItineraire(itineraire)).start();
                             callback.onSucces(itineraire);
                         } catch (Exception e) {
@@ -149,7 +168,12 @@ public class ItineraireController {
                             callback.onErreur("Erreur réseau inconnue");
                         }
                     }
-            );
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    return getAuthHeaders();
+                }
+            };
 
             VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
 
@@ -179,7 +203,12 @@ public class ItineraireController {
                         callback.onErreur("Erreur réseau : " + erreur.getMessage());
                     }
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                return getAuthHeaders();
+            }
+        };
 
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }

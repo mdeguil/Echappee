@@ -1,4 +1,5 @@
 <?php
+
 namespace App\State\Processor;
 
 use ApiPlatform\Metadata\Operation;
@@ -8,29 +9,31 @@ use App\Dto\ListeLieuxOutput;
 use App\Entity\Itiniraire;
 use App\Entity\ListeLieux;
 use App\Repository\LieuRepository;
-use App\Repository\UtilisateurRepository; // Ajout du Repository
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class ItineraireProcessor implements ProcessorInterface
 {
     public function __construct(
         private EntityManagerInterface $em,
         private LieuRepository         $lieuRepository,
-        private UtilisateurRepository  $utilisateurRepository,
+        private Security               $security,
     ) {}
 
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ItineraireOutput
     {
+        // Récupère l'utilisateur connecté via le JWT — ne jamais lire depuis le body
+        $utilisateur = $this->security->getUser();
+
+        if (!$utilisateur) {
+            throw new UnauthorizedHttpException('Bearer', 'Utilisateur non authentifié');
+        }
+
         $itineraire = new Itiniraire();
         $itineraire->setDureTotal($data->dureTotal);
-
-        // --- GESTION DE L'UTILISATEUR ---
-        if ($data->utilisateur) {
-            $user = $this->utilisateurRepository->find($data->utilisateur);
-            if ($user) {
-                $itineraire->setUtilisateur($user); // On lie l'entité Utilisateur
-            }
-        }
+        $itineraire->setUtilisateur($utilisateur);
 
         // --- GESTION DES LIEUX ---
         foreach ($data->listeLieux as $idLieu) {
@@ -49,17 +52,12 @@ class ItineraireProcessor implements ProcessorInterface
         $this->em->flush();
 
         // --- CONSTRUCTION DE L'OUTPUT ---
-        $output           = new ItineraireOutput();
+        $output            = new ItineraireOutput();
         $output->id        = $itineraire->getId();
         $output->dureTotal = $itineraire->getDureTotal();
 
-        // On renvoie l'ID de l'utilisateur dans l'output
-        if ($itineraire->getUtilisateur()) {
-            $output->utilisateur = $itineraire->getUtilisateur()->getId();
-        }
-
         foreach ($itineraire->getListeLieux() as $ll) {
-            $llOutput          = new ListeLieuxOutput();
+            $llOutput           = new ListeLieuxOutput();
             $llOutput->id       = $ll->getId();
             $llOutput->idLieu   = $ll->getIdLieu()->getId();
             $llOutput->nomLieu  = $ll->getIdLieu()->getNom();
