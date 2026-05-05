@@ -27,15 +27,13 @@ public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
     /**
-     * Migration v1 → v2 :
-     * - Renommage table "Itiniraire" → "itiniraire" + ajout colonne userId
-     * - Ajout table detail_lieu
-     * - Ajout colonne token dans utilisateur
+     * Migration de la version 1 à 2 :
+     * Refactorisation de la table 'Itiniraire' et ajout des entités 'detail_lieu'
+     * et un champ 'token' dans l'entité utilisateur.
      */
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
         public void migrate(SupportSQLiteDatabase database) {
-            // Recréer la table itiniraire avec userId
             database.execSQL("DROP TABLE IF EXISTS `itiniraire_old`");
             database.execSQL("ALTER TABLE `Itiniraire` RENAME TO `itiniraire_old`");
             database.execSQL("CREATE TABLE IF NOT EXISTS `itiniraire` (" +
@@ -49,7 +47,6 @@ public abstract class AppDatabase extends RoomDatabase {
                     "SELECT id, dureTotal, lieux, nbLieux, 0 FROM `itiniraire_old`");
             database.execSQL("DROP TABLE `itiniraire_old`");
 
-            // Créer la table detail_lieu
             database.execSQL("CREATE TABLE IF NOT EXISTS `detail_lieu` (" +
                     "`id` INTEGER NOT NULL, " +
                     "`description` TEXT, " +
@@ -59,7 +56,6 @@ public abstract class AppDatabase extends RoomDatabase {
                     "`photos` TEXT, " +
                     "PRIMARY KEY(`id`))");
 
-            // Ajouter colonne token à utilisateur (si elle n'existe pas)
             try {
                 database.execSQL("ALTER TABLE `utilisateur` ADD COLUMN `token` TEXT");
             } catch (Exception ignored) {}

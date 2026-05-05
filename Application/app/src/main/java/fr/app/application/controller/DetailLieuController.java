@@ -10,15 +10,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
 
 import fr.app.application.model.DetailLieux;
-import fr.app.application.model.ReponseDetailLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.BDD.AppDatabase;
 import fr.app.application.utils.VolleyUtils;
 
-/**
- * Controller qui récupère le détail d'un lieu depuis l'API,
- * le sauvegarde en BDD locale, et offre un fallback offline.
- */
 public class DetailLieuController {
 
     private static final String TAG             = "DetailLieuController";
@@ -54,7 +49,6 @@ public class DetailLieuController {
                     try {
                         DetailLieux detail = gson.fromJson(reponse, DetailLieux.class);
                         if (detail != null && detail.getId() != 0) {
-                            // Sauvegarder en BDD pour l'accès offline
                             new Thread(() -> db.myDao().insertDetailLieu(detail)).start();
                             callback.onSucces(detail);
                         } else {
@@ -66,7 +60,6 @@ public class DetailLieuController {
                     }
                 },
                 erreur -> {
-                    // Fallback : lire depuis la BDD locale
                     new Thread(() -> {
                         DetailLieux local = db.myDao().getDetailLieu(id);
                         Handler h = new Handler(Looper.getMainLooper());

@@ -6,9 +6,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
-/**
- * Classe utilitaire pour la gestion de la file d'attente des requêtes Volley.
- */
+
 public class VolleyUtils {
     private static VolleyUtils instance;
     private RequestQueue requestQueue;

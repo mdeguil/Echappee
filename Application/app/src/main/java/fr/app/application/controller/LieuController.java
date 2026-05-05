@@ -37,6 +37,10 @@ public class LieuController {
         recupererLieuxAvecFiltres(null, null, callback);
     }
 
+    /**
+     * Récuper une liste de lieux en fonction du filtrage effectuer
+     * filtre par défaut : aucun
+     */
     public void recupererLieuxAvecFiltres(String categorie, String recherche, CallbackLieux callback) {
         String urlBase = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_LIEUX);
         StringBuilder urlBuilder = new StringBuilder(urlBase);
@@ -61,7 +65,6 @@ public class LieuController {
                         if (reponseLieux != null && reponseLieux.getData() != null) {
                             List<Lieu> lieux = reponseLieux.getData();
 
-                            // Sauvegarder en BDD pour l'accès offline
                             new Thread(() -> db.myDao().insertLieux(lieux)).start();
 
                             callback.onSucces(lieux);
@@ -73,7 +76,6 @@ public class LieuController {
                     }
                 },
                 erreur -> {
-                    // Pas de réseau → lire depuis la BDD locale
                     new Thread(() -> {
                         List<Lieu> lieuxLocaux = db.myDao().getAllLieux();
                         android.os.Handler mainHandler =

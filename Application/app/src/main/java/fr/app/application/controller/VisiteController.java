@@ -24,8 +24,6 @@ public class VisiteController {
     private final Context contexte;
     private final Gson    gson;
 
-    // ── Callbacks ─────────────────────────────────────────────────────────
-
     public interface CallbackVisites {
         void onSucces(List<Visite> visites);
         void onErreur(String messageErreur);
@@ -41,15 +39,14 @@ public class VisiteController {
         void onErreur(String messageErreur);
     }
 
-    // ── Constructeur ──────────────────────────────────────────────────────
-
     public VisiteController(Context contexte) {
         this.contexte = contexte;
         this.gson     = new Gson();
     }
 
-    // ── GET /api/visites ──────────────────────────────────────────────────
-
+    /**
+     * Recupère tout les visite de la BDD
+     */
     public void recupererVisites(CallbackVisites callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_VISITES);
 
@@ -74,7 +71,6 @@ public class VisiteController {
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    // ── Création en 2 étapes ──────────────────────────────────────────────
 
     public void creerVisite(String date,
                             int note,
@@ -106,10 +102,8 @@ public class VisiteController {
                             int commentaireId;
 
                             if (reponse.has("id")) {
-                                // JSON simple
                                 commentaireId = reponse.getInt("id");
                             } else if (reponse.has("@id")) {
-                                // JSON-LD : "/api/commentaires/12"
                                 String iri = reponse.getString("@id");
                                 commentaireId = Integer.parseInt(
                                         iri.substring(iri.lastIndexOf("/") + 1)
@@ -178,8 +172,6 @@ public class VisiteController {
             callback.onErreur("Erreur construction requête visite : " + e.getMessage());
         }
     }
-
-    // ── DELETE /api/visites/{id} ──────────────────────────────────────────
 
     public void supprimerVisite(int id, CallbackSupprimer callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_VISITES + "/" + id);

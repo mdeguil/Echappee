@@ -57,7 +57,6 @@ public class DirectionsUtils {
 
         Handler mainHandler = new Handler(Looper.getMainLooper());
 
-        // HttpURLConnection dans un thread séparé — aucun intercepteur Volley
         new Thread(() -> {
             HttpURLConnection connection = null;
             try {
@@ -66,7 +65,6 @@ public class DirectionsUtils {
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(15_000);
                 connection.setReadTimeout(15_000);
-                // Aucun header Authorization — uniquement Accept
                 connection.setRequestProperty("Accept", "application/json");
                 connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 

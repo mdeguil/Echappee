@@ -91,7 +91,6 @@ public class ItineraireController {
                         if (liste != null) {
                             final List<Itineraire> finalListe = liste;
                             int userId = session.getUserId();
-                            // Associer l'userId avant la sauvegarde locale
                             for (Itineraire it : finalListe) it.setUserId(userId);
 
                             new Thread(() -> db.myDao().insertItineraires(finalListe)).start();
@@ -104,7 +103,6 @@ public class ItineraireController {
                     }
                 },
                 erreur -> {
-                    // Fallback : itinéraires locaux de l'utilisateur connecté
                     int userId = session.getUserId();
                     new Thread(() -> {
                         List<Itineraire> locaux = db.myDao().getItinerairesByUser(userId);
@@ -129,7 +127,6 @@ public class ItineraireController {
 
     /**
      * Crée un itinéraire via l'API et le sauvegarde localement.
-     * L'utilisateur est déduit du JWT côté Symfony — ne pas l'envoyer dans le body.
      */
     public void creerItineraire(int dureTotal, List<Integer> idLieux, CallbackCreerItineraire callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ITINERAIRES);
@@ -143,9 +140,6 @@ public class ItineraireController {
                 lieuxArray.put(id);
             }
             body.put("listeLieux", lieuxArray);
-
-            // Ne pas envoyer "utilisateur" dans le body :
-            // Symfony récupère l'utilisateur connecté via $this->getUser() grâce au JWT.
 
             JsonObjectRequest requete = new JsonObjectRequest(
                     Request.Method.POST, url, body,

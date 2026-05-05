@@ -15,8 +15,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NetworkMonitor {
 
-    // ── Interface Observer ────────────────────────────────────────────────
-
     public interface Observer {
         void onConnexionRetablie();
 

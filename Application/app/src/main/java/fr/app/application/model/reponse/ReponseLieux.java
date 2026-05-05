@@ -6,7 +6,7 @@ import java.util.List;
 import fr.app.application.model.Lieu;
 
 /**
- * Représente la réponse complète de GET /api/lieux
+ * Représente la réponse complète du GET
  * Format : { "data": [ {...}, {...} ] }
  */
 public class ReponseLieux {

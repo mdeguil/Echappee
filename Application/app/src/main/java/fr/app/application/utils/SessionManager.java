@@ -3,10 +3,6 @@ package fr.app.application.utils;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-/**
- * Gestionnaire de session centralisé.
- * Stocke le JWT et l'ID utilisateur pour permettre l'accès offline.
- */
 public class SessionManager {
 
     private static final String PREFS_NAME  = "auth";
@@ -33,7 +29,7 @@ public class SessionManager {
     }
 
     public int getUserId() {
-        return prefs.getInt(KEY_USER_ID, 0); // 0 = utilisateur par défaut si ID inconnu
+        return prefs.getInt(KEY_USER_ID, 0);
     }
 
     public String getEmail() {

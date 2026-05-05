@@ -16,8 +16,7 @@ public class MeteoController {
 
     private static final String TAG = "MeteoController";
 
-    private static final String URL_BASE =
-            "https://api.openweathermap.org/data/2.5/weather";  // ← corrigé
+    private static final String URL_BASE = "https://api.openweathermap.org/data/2.5/weather";
 
     private final Context contexte;
     private final Gson    gson;
@@ -32,6 +31,9 @@ public class MeteoController {
         this.gson     = new Gson();
     }
 
+    /**
+     * Récuper les donnée de l'API météo en fonction d'un lieu
+     */
     public void recupererMeteo(double latitude, double longitude, CallbackMeteo callback) {
 
         String url = URL_BASE
@@ -39,7 +41,7 @@ public class MeteoController {
                 + "&lon="   + longitude
                 + "&appid=" + OPENWEATHER_API_KEY
                 + "&units=metric"
-                + "&lang=fr";  // ← plus de &dt=
+                + "&lang=fr";
 
         Log.d(TAG, "Appel météo : " + url);
 

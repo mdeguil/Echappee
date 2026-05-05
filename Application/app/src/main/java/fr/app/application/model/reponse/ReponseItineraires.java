@@ -6,8 +6,8 @@ import java.util.List;
 import fr.app.application.model.Itineraire;
 
 /**
- * Wrapper de la réponse API pour la liste des itinéraires.
- * Correspond à la structure : { "data": [...] }
+ * Représente la réponse complète du GET
+ * Format : { "data": [ {...}, {...} ] }
  */
 public class ReponseItineraires {
 
