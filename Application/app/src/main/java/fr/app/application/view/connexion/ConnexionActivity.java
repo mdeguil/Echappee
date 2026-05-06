@@ -51,23 +51,22 @@ public class ConnexionActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         db             = AppDatabase.getDatabase(this);
 
-        // Si on est HORS-LIGNE et qu'une session existe déjà
         if (!isNetworkAvailable() && sessionManager.isLoggedIn()) {
             Log.d(TAG, "Mode hors-ligne : utilisation de la session locale.");
             navigateToMain();
             return;
         }
 
-        // Sinon, on reste sur l'écran de connexion pour forcer l'auth via API
         Log.d(TAG, "Connexion disponible ou session absente : formulaire affiché.");
         initViews();
         setupListeners();
     }
 
     private boolean isNetworkAvailable() {
-        android.net.ConnectivityManager connectivityManager = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
-        android.net.NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+        android.net.NetworkInfo info = cm.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 
     private void initViews() {
@@ -185,15 +184,17 @@ public class ConnexionActivity extends AppCompatActivity {
                 if (json.has("token")) {
                     String token = json.getString("token");
 
-                    int userId = extraireUserIdDuToken(token);
+                    // Extraire l'email depuis le champ "username" du payload JWT (standard Symfony)
+                    String emailFromJwt = extraireUsernameduToken(token);
+                    String emailFinal   = (emailFromJwt != null) ? emailFromJwt : email;
 
-                    if (userId == 0) {
-                        Log.w(TAG, "ID non trouvé dans le JWT, utilisation de l'ID par défaut (1)");
-                        userId = 1;
-                    }
+                    // userId dérivé du hash de l'email → stable et unique par utilisateur
+                    int userId = Math.abs(emailFinal.hashCode());
 
-                    sessionManager.saveSession(token, userId, email);
-                    sauvegarderUtilisateurEnBDD(userId, email, mdp, token);
+                    Log.d(TAG, "Email JWT : " + emailFinal + " → userId hash : " + userId);
+
+                    sessionManager.saveSession(token, userId, emailFinal);
+                    sauvegarderUtilisateurEnBDD(userId, emailFinal, mdp, token);
                     navigateToMain();
                 } else {
                     showError("Clé 'token' absente de la réponse");
@@ -211,26 +212,24 @@ public class ConnexionActivity extends AppCompatActivity {
     }
 
     /**
-     * Tente d'extraire l'ID utilisateur du payload JWT.
-     * Retourne 0 si impossible (l'API ne l'inclut pas forcément).
+     * Extrait le champ "username" du payload JWT (= email chez Symfony).
      */
-    private int extraireUserIdDuToken(String token) {
+    private String extraireUsernameduToken(String token) {
         try {
             String[] parts = token.split("\\.");
-            if (parts.length < 2) return 0;
+            if (parts.length < 2) return null;
             String payload = parts[1];
             int padding = (4 - payload.length() % 4) % 4;
             for (int i = 0; i < padding; i++) payload += "=";
             byte[]     decoded = android.util.Base64.decode(payload, android.util.Base64.URL_SAFE);
             JSONObject json    = new JSONObject(new String(decoded, StandardCharsets.UTF_8));
             Log.d(TAG, "JWT payload : " + json.toString());
-            if (json.has("id"))      return json.getInt("id");
-            if (json.has("user_id")) return json.getInt("user_id");
-            if (json.has("userId"))  return json.getInt("userId");
+            if (json.has("username")) return json.getString("username");
+            if (json.has("email"))    return json.getString("email");
         } catch (Exception e) {
-            Log.w(TAG, "Impossible de décoder l'userId depuis le JWT : " + e.getMessage());
+            Log.w(TAG, "Impossible de décoder le username depuis le JWT : " + e.getMessage());
         }
-        return 0; // valeur par défaut non bloquante
+        return null;
     }
 
     private void sauvegarderUtilisateurEnBDD(int userId, String email, String mdp, String token) {
@@ -243,7 +242,7 @@ public class ConnexionActivity extends AppCompatActivity {
                 u.setToken(token);
                 db.myDao().clearUsers();
                 db.myDao().setLastUser(u);
-                Log.d(TAG, "Utilisateur sauvegardé en BDD locale (id=" + userId + ")");
+                Log.d(TAG, "Utilisateur sauvegardé en BDD locale (id=" + userId + ", email=" + email + ")");
             } catch (Exception e) {
                 Log.e(TAG, "Erreur sauvegarde BDD : " + e.getMessage());
             }
