@@ -37,8 +37,17 @@ public class SessionManager {
     }
 
     /**
+     * Retourne un userId stable et unique dérivé de l'email.
+     * Utilisé pour isoler les itinéraires par utilisateur en mode hors-ligne.
+     */
+    public int getUserIdFromEmail() {
+        String email = getEmail();
+        if (email == null || email.isEmpty()) return 0;
+        return Math.abs(email.hashCode());
+    }
+
+    /**
      * L'utilisateur est considéré connecté dès qu'un token JWT est présent.
-     * On ne bloque plus sur l'userId car certaines APIs ne l'incluent pas dans le JWT.
      */
     public boolean isLoggedIn() {
         String token = getToken();
