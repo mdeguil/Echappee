@@ -24,7 +24,7 @@ import fr.app.application.view.visite.HistoriqueVisiteActivity;
 
 public class ItineraireActivity extends AppCompatActivity {
 
-    private ProgressBar       barreChargement;
+    private ProgressBar        barreChargement;
     private View               layoutAucunItineraire;
     private RecyclerView       recyclerItineraires;
     private ItineraireAdapter  adaptateur;
@@ -32,6 +32,21 @@ public class ItineraireActivity extends AppCompatActivity {
     private final List<Itineraire> listeItineraires = new ArrayList<>();
 
     private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
+
+    private final NetworkMonitor.Observer networkObserver = new NetworkMonitor.Observer() {
+        @Override
+        public void onConnexionRetablie() {
+            configurerBottomNav();
+            chargerItineraires();
+            Toast.makeText(ItineraireActivity.this,
+                    "Connexion rétablie", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onConnexionPerdue() {
+            configurerBottomNav();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,8 +62,20 @@ public class ItineraireActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(v -> finish());
 
         initVues();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        NetworkMonitor.getInstance(this).ajouterObserver(networkObserver);
         configurerBottomNav();
         chargerItineraires();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        NetworkMonitor.getInstance(this).retirerObserver(networkObserver);
     }
 
 
@@ -65,15 +92,14 @@ public class ItineraireActivity extends AppCompatActivity {
         controleur = new ItineraireController(this);
     }
 
+
     private void configurerBottomNav() {
-        // Sélectionner l'onglet courant
-        bottomNavigationView.setSelectedItemId(R.id.nav_liste_itineraires);
+        boolean enLigne = estConnecte();
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
             if (id == R.id.nav_liste_itineraires) {
-                // Déjà sur cette page
                 return true;
 
             } else if (id == R.id.nav_liste_lieux) {
@@ -82,18 +108,56 @@ public class ItineraireActivity extends AppCompatActivity {
                 return true;
 
             } else if (id == R.id.nav_creer_itineraire) {
-                startActivity(new Intent(this, CreerItineraireActivity.class));
-                finish();
+                if (enLigne) {
+                    startActivity(new Intent(this, CreerItineraireActivity.class));
+                    finish();
+                } else {
+                    Toast.makeText(ItineraireActivity.this,
+                            "Connexion requise pour créer un itinéraire",
+                            Toast.LENGTH_SHORT).show();
+                }
                 return true;
 
             } else if (id == R.id.nav_historique) {
-                startActivity(new Intent(this, HistoriqueVisiteActivity.class));
-                finish();
+                if (enLigne) {
+                    startActivity(new Intent(this, HistoriqueVisiteActivity.class));
+                    finish();
+                } else {
+                    Toast.makeText(ItineraireActivity.this,
+                            "Connexion requise pour voir l'historique",
+                            Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
 
             return false;
         });
+
+        applyItemAlpha(R.id.nav_creer_itineraire, enLigne ? 1f : 0.4f);
+        applyItemAlpha(R.id.nav_historique,       enLigne ? 1f : 0.4f);
+
+        bottomNavigationView.setSelectedItemId(R.id.nav_liste_itineraires);
+    }
+
+    private void applyItemAlpha(int menuItemId, float alpha) {
+        for (int i = 0; i < bottomNavigationView.getChildCount(); i++) {
+            View child = bottomNavigationView.getChildAt(i);
+            if (child instanceof android.view.ViewGroup) {
+                android.view.ViewGroup menuView = (android.view.ViewGroup) child;
+                for (int j = 0; j < menuView.getChildCount(); j++) {
+                    View itemView = menuView.getChildAt(j);
+                    if (itemView.getId() == menuItemId) {
+                        itemView.setAlpha(alpha);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+
+    private boolean estConnecte() {
+        return NetworkMonitor.getInstance(this).estConnecte();
     }
 
     private void chargerItineraires() {
@@ -128,7 +192,6 @@ public class ItineraireActivity extends AppCompatActivity {
                 new ItineraireController.CallbackSupprimer() {
                     @Override
                     public void onSucces() {
-                        // Retirer de la liste et mettre à jour l'affichage
                         listeItineraires.remove(position);
                         adaptateur.notifyItemRemoved(position);
 

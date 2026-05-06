@@ -158,12 +158,27 @@ public class ListeLieuxActivity extends AppCompatActivity implements OnMapReadyC
             return false;
         });
 
-        // Griser les items indisponibles hors ligne
-        bottomNavigationView.getMenu().findItem(R.id.nav_creer_itineraire).setEnabled(enLigne);
-        bottomNavigationView.getMenu().findItem(R.id.nav_historique).setEnabled(enLigne);
+        applyItemAlpha(R.id.nav_creer_itineraire, enLigne ? 1f : 0.4f);
+        applyItemAlpha(R.id.nav_historique,       enLigne ? 1f : 0.4f);
 
         // Sélectionner l'onglet courant
         bottomNavigationView.setSelectedItemId(R.id.nav_liste_lieux);
+    }
+
+    private void applyItemAlpha(int menuItemId, float alpha) {
+        for (int i = 0; i < bottomNavigationView.getChildCount(); i++) {
+            View child = bottomNavigationView.getChildAt(i);
+            if (child instanceof android.view.ViewGroup) {
+                android.view.ViewGroup menuView = (android.view.ViewGroup) child;
+                for (int j = 0; j < menuView.getChildCount(); j++) {
+                    View itemView = menuView.getChildAt(j);
+                    if (itemView.getId() == menuItemId) {
+                        itemView.setAlpha(alpha);
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     private void chargerLieux() {
