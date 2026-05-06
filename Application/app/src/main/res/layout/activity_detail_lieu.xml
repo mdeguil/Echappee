@@ -92,24 +92,6 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
-                    <RatingBar
-                        android:id="@+id/ratingBarDetail"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:isIndicator="true"
-                        android:numStars="5"
-                        android:stepSize="1"
-                        style="@style/Widget.AppCompat.RatingBar.Small" />
-
-                    <TextView
-                        android:id="@+id/tvNoteDetail"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:textAppearance="?attr/textAppearanceBodyLarge"
-                        android:textColor="?attr/colorOnSurface"
-                        tools:text="4 / 5" />
-
                 </LinearLayout>
             </LinearLayout>
 

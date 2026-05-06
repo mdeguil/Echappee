@@ -51,6 +51,7 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
      * @var Collection<int, Commentaire>
      */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'utilisateur')]
+    #[ORM\JoinColumn(nullable: True)]
     private Collection $listeCommentaires;
 
     public function __construct()

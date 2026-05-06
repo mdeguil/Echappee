@@ -13,7 +13,7 @@ public class ApiConfig {
     private static final String PREFS_NAME  = "api_config";
     private static final String KEY_URL     = "base_url";
 
-    private static final String URL_PAR_DEFAUT = "http://172.20.10.2:8000";
+    private static final String URL_PAR_DEFAUT = "http://10.24.28.102:8000";
     // private static final String URL_PAR_DEFAUT = "http://192.168.0.136:8000";
 
     private static ApiConfig instance;

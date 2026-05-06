@@ -128,7 +128,6 @@ public class VisiteActivity extends AppCompatActivity {
         Map<String, String> headers = new HashMap<>();
         headers.put("Content-Type",  "application/json");
         headers.put("Accept",        "application/json");
-        // headers.put("Authorization", "Bearer " + token); // si JWT
         return headers;
     }
 

@@ -67,14 +67,12 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
     }
 
     private void configurerBottomNav() {
-        // Sélectionner l'onglet courant
         bottomNavigationView.setSelectedItemId(R.id.nav_historique);
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
 
             if (id == R.id.nav_historique) {
-                // Déjà sur cette page
                 return true;
 
             } else if (id == R.id.nav_liste_lieux) {

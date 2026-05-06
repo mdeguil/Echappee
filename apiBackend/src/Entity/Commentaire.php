@@ -41,25 +41,26 @@ class Commentaire
     #[Groups(['commentaire:read', 'commentaire:write', 'visite:read'])]
     private ?string $message = null;
 
-
     /**
      * @var Collection<int, Visite>
      */
     #[ORM\OneToMany(targetEntity: Visite::class, mappedBy: 'commentaires')]
     private Collection $visite;
 
+
     #[ORM\ManyToOne(inversedBy: 'listeCommentaires')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['commentaire:read', 'visite:read','commentaire:write'])]   
     private ?Lieu $lieu = null;
 
     #[ORM\ManyToOne(inversedBy: 'listeCommentaires')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['commentaire:write'])]
     private ?Utilisateur $utilisateur = null;
 
     public function __construct()
     {
-        $this->lieu = new ArrayCollection();
-        $this->utilisateur = new ArrayCollection();
+
         $this->visite = new ArrayCollection();
     }
 
@@ -76,7 +77,6 @@ class Commentaire
     public function setNote(int $note): static
     {
         $this->note = $note;
-
         return $this;
     }
 
@@ -88,7 +88,6 @@ class Commentaire
     public function setMessage(?string $message): static
     {
         $this->message = $message;
-
         return $this;
     }
 
@@ -106,19 +105,16 @@ class Commentaire
             $this->visite->add($visite);
             $visite->setCommentaires($this);
         }
-
         return $this;
     }
 
     public function removeVisite(Visite $visite): static
     {
         if ($this->visite->removeElement($visite)) {
-            // set the owning side to null (unless already changed)
             if ($visite->getCommentaires() === $this) {
                 $visite->setCommentaires(null);
             }
         }
-
         return $this;
     }
 
@@ -130,7 +126,6 @@ class Commentaire
     public function setLieu(?Lieu $lieu): static
     {
         $this->lieu = $lieu;
-
         return $this;
     }
 
@@ -142,7 +137,6 @@ class Commentaire
     public function setUtilisateur(?Utilisateur $utilisateur): static
     {
         $this->utilisateur = $utilisateur;
-
         return $this;
     }
 }

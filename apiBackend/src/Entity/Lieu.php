@@ -12,6 +12,7 @@ use App\State\Provider\LieuListeProvider;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: LieuRepository::class)]
 #[ApiResource(
@@ -32,10 +33,11 @@ class Lieu
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['lieu:read', 'commentaire:read', 'visite:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['visite:read'])]
+    #[Groups(['lieu:read', 'commentaire:read', 'visite:read'])]
     private ?string $nom = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -50,15 +52,10 @@ class Lieu
     #[ORM\Column(nullable: true)]
     private ?float $longitude = null;
 
-    /**
-     * Catégorie du lieu.
-     * nullable: true — les lieux importés sans type connu auront null.
-     */
     #[ORM\ManyToOne(inversedBy: 'lieux')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Categorie $categorie = null;
 
-    // ── Relations ──────────────────────────────────────────────────────────
 
     #[ORM\OneToOne(inversedBy: 'lieu', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
@@ -120,7 +117,6 @@ class Lieu
     public function removeListeCommentaire(Commentaire $listeCommentaire): static
     {
         if ($this->listeCommentaires->removeElement($listeCommentaire)) {
-            // set the owning side to null (unless already changed)
             if ($listeCommentaire->getLieu() === $this) {
                 $listeCommentaire->setLieu(null);
             }
