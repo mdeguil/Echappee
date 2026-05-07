@@ -10,16 +10,14 @@ import com.google.gson.Gson;
 import java.util.Arrays;
 import java.util.List;
 
+import fr.app.application.controller.LieuController;
 import fr.app.application.model.Itineraire;
-import fr.app.application.model.Lieu;
 import fr.app.application.model.reponse.ReponseItineraires;
-import fr.app.application.model.reponse.ReponseLieux;
 import fr.app.application.utils.BDD.AppDatabase;
 
 public class SyncManager {
 
     private static final String TAG = "SyncManager";
-
 
     private static volatile SyncManager instance;
 
@@ -34,50 +32,54 @@ public class SyncManager {
         return instance;
     }
 
-
-    private final Context     appContext;
-    private final Gson        gson = new Gson();
+    private final Context appContext;
+    private final Gson    gson = new Gson();
 
     private SyncManager(Context appContext) {
         this.appContext = appContext;
     }
 
+    /**
+     * Lance l'écoute réseau.
+     * Au retour de la connexion, synchronise lieux + leurs détails + itinéraires.
+     *
+     * Le préchargement des détails est délégué à LieuController.recupererLieux()
+     * qui appelle prechargerTousLesDetails() après chaque chargement réussi.
+     */
     public void start() {
         NetworkMonitor.getInstance(appContext).ajouterObserver(new NetworkMonitor.Observer() {
             @Override
             public void onConnexionRetablie() {
                 Log.d(TAG, "Connexion rétablie → synchronisation globale en cours…");
-                syncLieux();
+                syncLieuxEtDetails();
                 syncItineraires();
             }
         });
     }
 
-    private void syncLieux() {
-        String url = ApiConfig.getInstance(appContext).getUrl("/api/lieus");
+    // ── Lieux + détails ───────────────────────────────────────────────────
 
-        StringRequest requete = new StringRequest(
-                Request.Method.GET, url,
-                reponse -> {
-                    try {
-                        ReponseLieux rep = gson.fromJson(reponse, ReponseLieux.class);
-                        if (rep != null && rep.getData() != null) {
-                            List<Lieu> lieux = rep.getData();
-                            AppDatabase db = AppDatabase.getDatabase(appContext);
-                            new Thread(() -> {
-                                db.myDao().insertLieux(lieux);
-                                Log.d(TAG, "Lieux synchronisés en base : " + lieux.size());
-                            }).start();
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Erreur sync lieux", e);
-                    }
-                },
-                erreur -> Log.w(TAG, "Sync lieux échouée (réseau) : " + erreur.getMessage())
-        );
+    /**
+     * Recharge la liste des lieux via LieuController.
+     * Le préchargement de tous les détails est automatiquement déclenché
+     * à l'intérieur de recupererLieux() dès que l'API répond.
+     */
+    private void syncLieuxEtDetails() {
+        LieuController lieuController = new LieuController(appContext);
+        lieuController.recupererLieux(new LieuController.CallbackLieux() {
+            @Override
+            public void onSucces(List<fr.app.application.model.Lieu> lieux) {
+                Log.d(TAG, "Lieux + détails synchronisés : " + lieux.size() + " lieu(x).");
+            }
 
-        VolleyUtils.getInstance(appContext).addToRequestQueue(requete);
+            @Override
+            public void onErreur(String messageErreur) {
+                Log.w(TAG, "Sync lieux échouée : " + messageErreur);
+            }
+        });
     }
+
+    // ── Itinéraires ───────────────────────────────────────────────────────
 
     private void syncItineraires() {
         String url = ApiConfig.getInstance(appContext).getUrl("/api/itiniraires");
@@ -104,14 +106,14 @@ public class SyncManager {
                             AppDatabase db = AppDatabase.getDatabase(appContext);
                             new Thread(() -> {
                                 db.myDao().insertItineraires(finalListe);
-                                Log.d(TAG, "Itinéraires synchronisés en base : " + finalListe.size());
+                                Log.d(TAG, "Itinéraires synchronisés : " + finalListe.size());
                             }).start();
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Erreur sync itinéraires", e);
                     }
                 },
-                erreur -> Log.w(TAG, "Sync itinéraires échouée (réseau) : " + erreur.getMessage())
+                erreur -> Log.w(TAG, "Sync itinéraires échouée : " + erreur.getMessage())
         ) {
             @Override
             public java.util.Map<String, String> getHeaders() {

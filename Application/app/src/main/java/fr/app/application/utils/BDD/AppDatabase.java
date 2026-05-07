@@ -28,8 +28,8 @@ public abstract class AppDatabase extends RoomDatabase {
 
     /**
      * Migration de la version 1 à 2 :
-     * Refactorisation de la table 'Itiniraire' et ajout des entités 'detail_lieu'
-     * et un champ 'token' dans l'entité utilisateur.
+     * Refactorisation de la table 'Itiniraire', ajout de 'detail_lieu'
+     * et du champ 'token' dans 'utilisateur'.
      */
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
@@ -62,6 +62,21 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
+    /**
+     * Migration de la version 2 à 3 :
+     * La table detail_lieu existait déjà depuis la migration 1→2.
+     * Cette migration est un no-op structurel, mais elle est obligatoire
+     * pour que Room ne déclenche pas fallbackToDestructiveMigration()
+     * et n'efface pas les données offline mises en cache.
+     */
+    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
+        @Override
+        public void migrate(SupportSQLiteDatabase database) {
+            // Aucun changement de schéma entre v2 et v3 :
+            // cette migration vide empêche la destruction des données offline.
+        }
+    };
+
     public static AppDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
@@ -70,7 +85,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     context.getApplicationContext(),
                                     AppDatabase.class,
                                     "charente_db")
-                            .addMigrations(MIGRATION_1_2)
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                             .fallbackToDestructiveMigration()
                             .build();
                 }

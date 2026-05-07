@@ -3,11 +3,11 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use App\State\DetailLieuListeProvider;
+use App\Repository\DetailLieuRepository;
+use App\State\Provider\DetailLieuCollectionProvider;
+use App\State\Provider\DetailLieuListeProvider;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DetailLieuRepository::class)]
@@ -16,6 +16,10 @@ use Doctrine\ORM\Mapping as ORM;
         new Get(
             uriTemplate: '/detail_lieus/{id}',
             provider: DetailLieuListeProvider::class,
+        ),
+        new GetCollection(
+            uriTemplate: '/detail_lieus',
+            provider: DetailLieuCollectionProvider::class,
         ),
     ],
     paginationItemsPerPage: 20,
@@ -117,7 +121,6 @@ class DetailLieu
 
     public function setLieu(Lieu $lieu): static
     {
-        // set the owning side of the relation if necessary
         if ($lieu->getDetail() !== $this) {
             $lieu->setDetail($this);
         }

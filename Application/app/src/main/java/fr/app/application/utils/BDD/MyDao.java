@@ -25,8 +25,13 @@ public interface MyDao {
 
     // ── Détails lieux ─────────────────────────────────────────────────────
 
+    /** Insertion unitaire (utilisée lors de la consultation d'un détail en ligne). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertDetailLieu(DetailLieux detail);
+
+    /** Insertion en batch — 1 seul appel SQL pour tous les détails. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertAllDetailLieux(List<DetailLieux> details);
 
     @Query("SELECT * FROM detail_lieu WHERE id = :id LIMIT 1")
     DetailLieux getDetailLieu(int id);

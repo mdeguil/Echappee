@@ -12,6 +12,7 @@ import com.google.gson.Gson;
 import fr.app.application.model.DetailLieux;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.BDD.AppDatabase;
+import fr.app.application.utils.NetworkMonitor;
 import fr.app.application.utils.VolleyUtils;
 
 public class DetailLieuController {
@@ -36,10 +37,24 @@ public class DetailLieuController {
 
     /**
      * Récupère les détails d'un lieu par son identifiant.
-     * Sauvegarde le résultat en BDD pour l'accès offline.
-     * En cas d'erreur réseau, retourne les données locales si disponibles.
+     *
+     * Stratégie offline-first :
+     *  1. Si le réseau est disponible → appel API → sauvegarde Room → callback
+     *  2. Si hors connexion           → lit Room directement → callback
+     *  3. Si API échoue              → repli sur Room → callback
+     *  4. Si rien nulle part         → onErreur()
      */
     public void recupererDetail(int id, CallbackDetail callback) {
+
+        boolean connecte = NetworkMonitor.getInstance(contexte).estConnecte();
+
+        if (!connecte) {
+            // Mode hors connexion : lecture immédiate en base, sans tenter le réseau
+            lireDepuisRoom(id, callback, "Hors connexion");
+            return;
+        }
+
+        // Mode en ligne : appel API avec repli Room en cas d'échec
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_DETAIL) + id;
 
         StringRequest requete = new StringRequest(
@@ -49,6 +64,7 @@ public class DetailLieuController {
                     try {
                         DetailLieux detail = gson.fromJson(reponse, DetailLieux.class);
                         if (detail != null && detail.getId() != 0) {
+                            // Sauvegarde en arrière-plan pour le prochain accès offline
                             new Thread(() -> db.myDao().insertDetailLieu(detail)).start();
                             callback.onSucces(detail);
                         } else {
@@ -56,23 +72,37 @@ public class DetailLieuController {
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "Erreur de parsing", e);
-                        callback.onErreur("Erreur de parsing : " + e.getMessage());
+                        // Parsing raté → on essaie quand même le cache local
+                        lireDepuisRoom(id, callback, "Erreur de parsing : " + e.getMessage());
                     }
                 },
                 erreur -> {
-                    new Thread(() -> {
-                        DetailLieux local = db.myDao().getDetailLieu(id);
-                        Handler h = new Handler(Looper.getMainLooper());
-                        if (local != null) {
-                            h.post(() -> callback.onSucces(local));
-                        } else {
-                            h.post(() -> callback.onErreur(
-                                    "Erreur réseau et aucun détail local disponible"));
-                        }
-                    }).start();
+                    Log.w(TAG, "Erreur réseau, repli sur Room pour l'id " + id);
+                    lireDepuisRoom(id, callback, "Erreur réseau");
                 }
         );
 
         VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
+    }
+
+    /**
+     * Lecture depuis Room sur un thread secondaire, post du résultat sur le thread UI.
+     *
+     * @param raisonRepli Message de contexte pour le log (non affiché à l'utilisateur).
+     */
+    private void lireDepuisRoom(int id, CallbackDetail callback, String raisonRepli) {
+        new Thread(() -> {
+            DetailLieux local = db.myDao().getDetailLieu(id);
+            Handler handler = new Handler(Looper.getMainLooper());
+
+            if (local != null) {
+                Log.d(TAG, "Données locales utilisées (" + raisonRepli + ") pour l'id " + id);
+                handler.post(() -> callback.onSucces(local));
+            } else {
+                Log.w(TAG, "Aucune donnée locale disponible pour l'id " + id);
+                handler.post(() -> callback.onErreur(
+                        "Détails indisponibles hors connexion"));
+            }
+        }).start();
     }
 }
