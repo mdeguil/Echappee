@@ -50,6 +50,7 @@ security:
         - { path: ^/api/itiniraires, roles: PUBLIC_ACCESS }
         - { path: ^/api/utilisateurs, roles: PUBLIC_ACCESS }
         - { path: ^/api/commentaires, roles: PUBLIC_ACCESS }
+        - { path: ^/api/detail_lieus, roles: PUBLIC_ACCESS }
         - { path: ^/api/visites, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: PUBLIC_ACCESS, methods: [GET] }
