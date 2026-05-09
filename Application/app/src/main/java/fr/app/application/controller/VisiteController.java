@@ -283,20 +283,29 @@ public class VisiteController {
                     Log.d("API_COMMENTAIRES", reponse);
                     try {
                         Type type = new TypeToken<List<Commentaire>>() {}.getType();
-                        List<Commentaire> commentaires;
+                        List<Commentaire> tous;
 
                         com.google.gson.JsonElement element = gson.fromJson(reponse, com.google.gson.JsonElement.class);
 
                         if (element.isJsonArray()) {
-                            commentaires = gson.fromJson(element.getAsJsonArray(), type);
+                            tous = gson.fromJson(element.getAsJsonArray(), type);
                         } else {
                             com.google.gson.JsonArray membres = element
                                     .getAsJsonObject()
                                     .getAsJsonArray("hydra:member");
-                            commentaires = gson.fromJson(membres, type);
+                            tous = gson.fromJson(membres, type);
                         }
 
-                        callback.onSucces(commentaires);
+                        // Filtre côté client car l'API ignore le paramètre lieu.id
+                        List<Commentaire> filtres = new java.util.ArrayList<>();
+                        for (Commentaire c : tous) {
+                            if (c.getLieu() != null && c.getLieu().getId() == lieuId) {
+                                filtres.add(c);
+                            }
+                        }
+                        Log.d("COMMENTAIRES", "Après filtre : " + filtres.size() + " commentaire(s) pour lieuId=" + lieuId);
+
+                        callback.onSucces(filtres);
 
                     } catch (Exception e) {
                         Log.e(TAG, "Erreur parsing commentaires", e);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -341,6 +342,7 @@ public class DetailLieuActivity extends AppCompatActivity {
 
     private void chargerCommentaires() {
         int lieuId = getIntent().getIntExtra(EXTRA_ID, -1);
+        Log.d("COMMENTAIRES", "Chargement pour lieuId = " + lieuId);
         if (lieuId == -1) return;
 
         sectionCommentaires.setVisibility(View.VISIBLE);
