@@ -25,11 +25,11 @@ import fr.app.application.utils.VolleyUtils;
 
 public class VisiteController {
 
-    private static final String ENDPOINT_VISITES = "/api/visites";
-    private static final String ENDPOINT_COMMENTAIRES = "/api/commentaires";
-    private static final String ENDPOINT_ME = "/api/me";
-    private static final String TAG = "VisiteController";
+    private static final String ENDPOINT_VISITES           = "/api/visites";
+    private static final String ENDPOINT_COMMENTAIRES      = "/api/commentaires";
+    private static final String ENDPOINT_ME                = "/api/me";
     private static final String ENDPOINT_COMMENTAIRES_LIEU = "/api/commentaires?lieu.id=";
+    private static final String TAG                        = "VisiteController";
 
     private final Context contexte;
     private final Gson    gson;
@@ -59,11 +59,29 @@ public class VisiteController {
         this.gson     = new Gson();
     }
 
-    /**
-     * Récupère toutes les visites de la BDD
-     */
+    // -------------------------------------------------------------------------
+    // Récupère uniquement les visites de l'utilisateur connecté.
+    // Étapes : 1) /api/me → userId
+    //          2) /api/visites?commentaires.utilisateur.id={userId}
+    //             (filtre via la relation existante, sans nouvelle colonne)
+    // -------------------------------------------------------------------------
     public void recupererVisites(CallbackVisites callback) {
-        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_VISITES);
+        recupererMonId(new OnIdRecupere() {
+            @Override
+            public void onIdRecu(int userId) {
+                recupererVisitesDeLUtilisateur(userId, callback);
+            }
+
+            @Override
+            public void onErreur(String message) {
+                callback.onErreur("Impossible d'identifier l'utilisateur : " + message);
+            }
+        });
+    }
+
+    private void recupererVisitesDeLUtilisateur(int userId, CallbackVisites callback) {
+        String url = ApiConfig.getInstance(contexte)
+                .getUrl(ENDPOINT_VISITES + "?commentaires.utilisateur.id=" + userId);
 
         StringRequest requete = new StringRequest(
                 Request.Method.GET,
@@ -93,18 +111,23 @@ public class VisiteController {
                     }
                 },
                 erreur -> callback.onErreur("Erreur réseau : " + erreur.getMessage())
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                return headersAvecToken();
+            }
+        };
 
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    /**
-     * Processus de création :
-     * 1. Récupère l'ID utilisateur (/api/me)
-     * 2. Crée le commentaire avec cet ID
-     * 3. Crée la visite avec l'ID du commentaire
-     */
-    public void creerVisite(String date, int note, String message, int lieuId, CallbackCreerVisite callback) {
+    // -------------------------------------------------------------------------
+    // Création : 1) /api/me → userId
+    //            2) POST /api/commentaires (avec utilisateur)
+    //            3) POST /api/visites (avec commentaire)
+    // -------------------------------------------------------------------------
+    public void creerVisite(String date, int note, String message, int lieuId,
+                            CallbackCreerVisite callback) {
         recupererMonId(new OnIdRecupere() {
             @Override
             public void onIdRecu(int userId) {
@@ -118,9 +141,100 @@ public class VisiteController {
         });
     }
 
-    /**
-     * Appelle l'endpoint PHP MeController pour obtenir l'ID de l'utilisateur connecté
-     */
+    // -------------------------------------------------------------------------
+    // Suppression : un seul DELETE /api/visites/{id}
+    // Le commentaire associé est supprimé automatiquement côté Symfony
+    // grâce au cascade: ['remove'] sur la relation Visite → Commentaire.
+    // -------------------------------------------------------------------------
+    public void supprimerVisite(int id, CallbackSupprimer callback) {
+        String url = ApiConfig.getInstance(contexte)
+                .getUrl(ENDPOINT_VISITES + "/" + id);
+
+        StringRequest requete = new StringRequest(
+                Request.Method.DELETE,
+                url,
+                reponse -> callback.onSucces(),
+                erreur -> {
+                    if (erreur.networkResponse != null
+                            && erreur.networkResponse.statusCode == 204) {
+                        callback.onSucces();
+                    } else {
+                        callback.onErreur("Erreur suppression : " + erreur.getMessage());
+                    }
+                }
+        ) {
+            @Override
+            public Map<String, String> getHeaders() {
+                return headersAvecToken();
+            }
+        };
+
+        VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
+    }
+
+    // -------------------------------------------------------------------------
+    // Commentaires d'un lieu
+    // -------------------------------------------------------------------------
+    public interface CallbackCommentaires {
+        void onSucces(List<Commentaire> commentaires);
+        void onErreur(String messageErreur);
+    }
+
+    public void recupererCommentairesDuLieu(int lieuId, CallbackCommentaires callback) {
+        String url = ApiConfig.getInstance(contexte)
+                .getUrl(ENDPOINT_COMMENTAIRES_LIEU) + lieuId;
+
+        StringRequest requete = new StringRequest(
+                Request.Method.GET,
+                url,
+                reponse -> {
+                    Log.d("API_COMMENTAIRES", reponse);
+                    try {
+                        Type type = new TypeToken<List<Commentaire>>() {}.getType();
+                        List<Commentaire> tous;
+
+                        com.google.gson.JsonElement element =
+                                gson.fromJson(reponse, com.google.gson.JsonElement.class);
+
+                        if (element.isJsonArray()) {
+                            tous = gson.fromJson(element.getAsJsonArray(), type);
+                        } else {
+                            com.google.gson.JsonArray membres = element
+                                    .getAsJsonObject()
+                                    .getAsJsonArray("hydra:member");
+                            tous = gson.fromJson(membres, type);
+                        }
+
+                        // Filtre côté client (l'API ignore parfois le paramètre lieu.id)
+                        List<Commentaire> filtres = new java.util.ArrayList<>();
+                        for (Commentaire c : tous) {
+                            if (c.getLieu() != null && c.getLieu().getId() == lieuId) {
+                                filtres.add(c);
+                            }
+                        }
+                        Log.d("COMMENTAIRES", "Après filtre : " + filtres.size()
+                                + " commentaire(s) pour lieuId=" + lieuId);
+
+                        callback.onSucces(filtres);
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "Erreur parsing commentaires", e);
+                        callback.onErreur("Impossible de lire les commentaires");
+                    }
+                },
+                erreur -> {
+                    Log.w(TAG, "Erreur réseau commentaires lieu " + lieuId);
+                    callback.onErreur("Commentaires indisponibles");
+                }
+        );
+
+        VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers privés
+    // -------------------------------------------------------------------------
+
     private void recupererMonId(final OnIdRecupere callbackId) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_ME);
 
@@ -143,32 +257,23 @@ public class VisiteController {
         ) {
             @Override
             public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Content-Type", "application/json");
-                headers.put("Accept", "application/json");
-
-                // Récupérer le token sauvegardé lors du login
-                SessionManager sessionManager = new SessionManager(contexte);
-                String token = sessionManager.getToken(); // Vérifie le nom de ta méthode dans SessionManager
-
-                if (token != null) {
-                    headers.put("Authorization", "Bearer " + token);
-                }
-
-                return headers;
+                return headersAvecToken();
             }
         };
+
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
     }
 
-    private void creationDuCommentaire(String date, int note, String message, int lieuId, int userId, CallbackCreerVisite callback) {
+    private void creationDuCommentaire(String date, int note, String message,
+                                       int lieuId, int userId,
+                                       CallbackCreerVisite callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_COMMENTAIRES);
 
         try {
             JSONObject body = new JSONObject();
-            body.put("note",    note);
-            body.put("message", message);
-            body.put("lieu",    "/api/lieus/" + lieuId);
+            body.put("note",        note);
+            body.put("message",     message);
+            body.put("lieu",        "/api/lieus/" + lieuId);
             body.put("utilisateur", "/api/utilisateurs/" + userId);
 
             JsonObjectRequest requete = new JsonObjectRequest(
@@ -182,7 +287,8 @@ public class VisiteController {
                                 commentaireId = reponse.getInt("id");
                             } else if (reponse.has("@id")) {
                                 String iri = reponse.getString("@id");
-                                commentaireId = Integer.parseInt(iri.substring(iri.lastIndexOf("/") + 1));
+                                commentaireId = Integer.parseInt(
+                                        iri.substring(iri.lastIndexOf("/") + 1));
                             } else {
                                 callback.onErreur("Impossible de récupérer l'ID du commentaire");
                                 return;
@@ -196,24 +302,23 @@ public class VisiteController {
             ) {
                 @Override
                 public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Content-Type", "application/json");
-                    headers.put("Accept", "application/json");
-                    return headers;
+                    return headersAvecToken();
                 }
             };
+
             VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
         } catch (Exception e) {
             callback.onErreur("Erreur construction JSON commentaire : " + e.getMessage());
         }
     }
 
-    private void creationDeLaVisite(String date, int commentaireId, CallbackCreerVisite callback) {
+    private void creationDeLaVisite(String date, int commentaireId,
+                                    CallbackCreerVisite callback) {
         String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_VISITES);
 
         try {
             JSONObject body = new JSONObject();
-            body.put("date", date);
+            body.put("date",         date);
             body.put("commentaires", "/api/commentaires/" + commentaireId);
 
             JsonObjectRequest requete = new JsonObjectRequest(
@@ -227,97 +332,39 @@ public class VisiteController {
                                 visite.setId(reponse.getInt("id"));
                             } else if (reponse.has("@id")) {
                                 String iri = reponse.getString("@id");
-                                visite.setId(Integer.parseInt(iri.substring(iri.lastIndexOf("/") + 1)));
+                                visite.setId(Integer.parseInt(
+                                        iri.substring(iri.lastIndexOf("/") + 1)));
                             }
                             callback.onSucces(visite);
                         } catch (Exception e) {
                             callback.onSucces(new Visite());
                         }
                     },
-                    erreur -> callback.onErreur("Erreur création visite : " + erreur.getMessage())
+                    erreur -> callback.onErreur("Erreur création visite : "
+                            + erreur.getMessage())
             ) {
                 @Override
                 public Map<String, String> getHeaders() {
-                    Map<String, String> headers = new HashMap<>();
-                    headers.put("Content-Type", "application/json");
-                    headers.put("Accept", "application/json");
-                    return headers;
+                    return headersAvecToken();
                 }
             };
+
             VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
         } catch (Exception e) {
             callback.onErreur("Erreur construction JSON visite : " + e.getMessage());
         }
     }
 
-    public void supprimerVisite(int id, CallbackSupprimer callback) {
-        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_VISITES + "/" + id);
+    private Map<String, String> headersAvecToken() {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json");
+        headers.put("Accept",       "application/json");
 
-        StringRequest requete = new StringRequest(
-                Request.Method.DELETE,
-                url,
-                reponse -> callback.onSucces(),
-                erreur -> {
-                    if (erreur.networkResponse != null && erreur.networkResponse.statusCode == 204) {
-                        callback.onSucces();
-                    } else {
-                        callback.onErreur("Erreur suppression : " + erreur.getMessage());
-                    }
-                }
-        );
-        VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
-    }
-
-    public interface CallbackCommentaires {
-        void onSucces(List<Commentaire> commentaires);
-        void onErreur(String messageErreur);
-    }
-
-    public void recupererCommentairesDuLieu(int lieuId, CallbackCommentaires callback) {
-        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_COMMENTAIRES_LIEU) + lieuId;
-
-        StringRequest requete = new StringRequest(
-                Request.Method.GET,
-                url,
-                reponse -> {
-                    Log.d("API_COMMENTAIRES", reponse);
-                    try {
-                        Type type = new TypeToken<List<Commentaire>>() {}.getType();
-                        List<Commentaire> tous;
-
-                        com.google.gson.JsonElement element = gson.fromJson(reponse, com.google.gson.JsonElement.class);
-
-                        if (element.isJsonArray()) {
-                            tous = gson.fromJson(element.getAsJsonArray(), type);
-                        } else {
-                            com.google.gson.JsonArray membres = element
-                                    .getAsJsonObject()
-                                    .getAsJsonArray("hydra:member");
-                            tous = gson.fromJson(membres, type);
-                        }
-
-                        // Filtre côté client car l'API ignore le paramètre lieu.id
-                        List<Commentaire> filtres = new java.util.ArrayList<>();
-                        for (Commentaire c : tous) {
-                            if (c.getLieu() != null && c.getLieu().getId() == lieuId) {
-                                filtres.add(c);
-                            }
-                        }
-                        Log.d("COMMENTAIRES", "Après filtre : " + filtres.size() + " commentaire(s) pour lieuId=" + lieuId);
-
-                        callback.onSucces(filtres);
-
-                    } catch (Exception e) {
-                        Log.e(TAG, "Erreur parsing commentaires", e);
-                        callback.onErreur("Impossible de lire les commentaires");
-                    }
-                },
-                erreur -> {
-                    Log.w(TAG, "Erreur réseau commentaires lieu " + lieuId);
-                    callback.onErreur("Commentaires indisponibles");
-                }
-        );
-
-        VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
+        SessionManager sessionManager = new SessionManager(contexte);
+        String token = sessionManager.getToken();
+        if (token != null) {
+            headers.put("Authorization", "Bearer " + token);
+        }
+        return headers;
     }
 }

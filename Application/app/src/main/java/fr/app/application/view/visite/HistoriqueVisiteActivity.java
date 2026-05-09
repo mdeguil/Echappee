@@ -12,8 +12,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.button.MaterialButton;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +32,6 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
     private VisiteController visiteController;
 
     private com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigationView;
-
 
     private final List<Visite> visites = new ArrayList<>();
 
@@ -106,7 +103,6 @@ public class HistoriqueVisiteActivity extends AppCompatActivity {
                 visites.clear();
                 visites.addAll(liste);
                 adapter.notifyDataSetChanged();
-
                 tvAucuneVisite.setVisibility(visites.isEmpty() ? View.VISIBLE : View.GONE);
             }
 
