@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
@@ -24,6 +26,9 @@ use Symfony\Component\Serializer\Annotation\Groups;
         new Delete(),
     ]
 )]
+// Filtre via la relation existante Visite → Commentaire → Utilisateur
+// Aucune nouvelle colonne : le schéma ne change pas
+#[ApiFilter(SearchFilter::class, properties: ['commentaires.utilisateur.id' => 'exact'])]
 class Visite
 {
     #[ORM\Id]
@@ -36,8 +41,14 @@ class Visite
     #[Groups(['visite:read', 'visite:write'])]
     private ?\DateTime $date = null;
 
-    #[ORM\ManyToOne(inversedBy: 'visite')]
-    #[ORM\JoinColumn(nullable: false)]
+    /**
+     * cascade: ['remove'] → quand une Visite est supprimée via l'ORM (DELETE /api/visites/{id}),
+     * Doctrine supprime automatiquement le Commentaire associé.
+     * onDelete: 'CASCADE' → filet de sécurité au niveau SQL.
+     * Aucune migration nécessaire : on modifie seulement le comportement ORM, pas la structure de la table.
+     */
+    #[ORM\ManyToOne(inversedBy: 'visite', cascade: ['remove'])]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     #[Groups(['visite:read', 'visite:write'])]
     private ?Commentaire $commentaires = null;
 
