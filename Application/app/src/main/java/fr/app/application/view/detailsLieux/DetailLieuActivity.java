@@ -20,35 +20,31 @@ import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.chip.Chip;
 
+import java.util.List;
 import java.util.Locale;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import fr.app.application.R;
 import fr.app.application.controller.DetailLieuController;
 import fr.app.application.controller.MeteoController;
+import fr.app.application.controller.VisiteController;
+import fr.app.application.model.Commentaire;
 import fr.app.application.model.DetailLieux;
 import fr.app.application.model.Lieu;
 import fr.app.application.model.Meteo;
+import fr.app.application.view.adapter.CommentaireAdapter;
 
-/**
- * Affiche le détail complet d'un lieu touristique.
- *
- * Données transmises par Intent (depuis ListeLieuxActivity) :
- *   - id, nom, photo principale, catégorie, note, latitude, longitude
- *
- * Données chargées depuis l'API détail (GET /api/lieux/{id}) :
- *   - description, horaires, tarif, accessibilite, photos
- *
- * Données chargées depuis OpenWeather (GET /onecall/timemachine) :
- *   - température, ressenti, humidité, vent, description, icône
- */
+
 public class DetailLieuActivity extends AppCompatActivity {
 
     public static final String EXTRA_ID        = "extra_id";
     public static final String EXTRA_NOM       = "extra_nom";
     public static final String EXTRA_PHOTO     = "extra_photo";
     public static final String EXTRA_CATEGORIE = "extra_categorie";
-    public static final String EXTRA_LATITUDE  = "extra_latitude";   // ← nouveau
-    public static final String EXTRA_LONGITUDE = "extra_longitude";  // ← nouveau
+    public static final String EXTRA_LATITUDE  = "extra_latitude";
+    public static final String EXTRA_LONGITUDE = "extra_longitude";
 
     private ImageView    imgPhoto;
     private TextView     tvNom;
@@ -86,6 +82,15 @@ public class DetailLieuActivity extends AppCompatActivity {
     private DetailLieuController controleurDetail;
     private MeteoController      controleurMeteo;
 
+    private View                 sectionCommentaires;
+    private TextView             tvNoteMoyenne;
+    private ProgressBar          progressBarCommentaires;
+    private TextView             tvErreurCommentaires;
+    private RecyclerView recyclerCommentaires;
+    private CommentaireAdapter commentaireAdapter;
+    private VisiteController visiteController;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,6 +107,7 @@ public class DetailLieuActivity extends AppCompatActivity {
         afficherDonneesBase();
         chargerDetail();
         chargerMeteo();
+        chargerCommentaires();
     }
 
     private void initVues() {
@@ -138,6 +144,18 @@ public class DetailLieuActivity extends AppCompatActivity {
 
         controleurDetail     = new DetailLieuController(this);
         controleurMeteo      = new MeteoController(this);
+        visiteController = new VisiteController(this);
+
+        sectionCommentaires     = findViewById(R.id.sectionCommentaires);
+        tvNoteMoyenne           = findViewById(R.id.tvNoteMoyenne);
+        progressBarCommentaires = findViewById(R.id.progressBarCommentaires);
+        tvErreurCommentaires    = findViewById(R.id.tvErreurCommentaires);
+        recyclerCommentaires    = findViewById(R.id.recyclerCommentaires);
+
+        commentaireAdapter = new CommentaireAdapter();
+        recyclerCommentaires.setLayoutManager(new LinearLayoutManager(this));
+        recyclerCommentaires.setAdapter(commentaireAdapter);
+        recyclerCommentaires.setNestedScrollingEnabled(false);
     }
 
 
@@ -320,6 +338,45 @@ public class DetailLieuActivity extends AppCompatActivity {
             imageView.setImageResource(android.R.drawable.ic_menu_gallery);
         }
     }
+
+    private void chargerCommentaires() {
+        int lieuId = getIntent().getIntExtra(EXTRA_ID, -1);
+        if (lieuId == -1) return;
+
+        sectionCommentaires.setVisibility(View.VISIBLE);
+        progressBarCommentaires.setVisibility(View.VISIBLE);
+        tvErreurCommentaires.setVisibility(View.GONE);
+
+        visiteController.recupererCommentairesDuLieu(lieuId, new VisiteController.CallbackCommentaires() {
+            @Override
+            public void onSucces(List<Commentaire> commentaires) {
+                progressBarCommentaires.setVisibility(View.GONE);
+
+                if (commentaires == null || commentaires.isEmpty()) {
+                    tvErreurCommentaires.setText("Aucun avis pour ce lieu.");
+                    tvErreurCommentaires.setVisibility(View.VISIBLE);
+                    return;
+                }
+
+                commentaireAdapter.setCommentaires(commentaires);
+
+                // Calcul de la note moyenne
+                double somme = 0;
+                for (Commentaire c : commentaires) somme += c.getNote();
+                double moyenne = somme / commentaires.size();
+                tvNoteMoyenne.setText(String.format(Locale.FRENCH,
+                        "★ %.1f  (%d)", moyenne, commentaires.size()));
+            }
+
+            @Override
+            public void onErreur(String messageErreur) {
+                progressBarCommentaires.setVisibility(View.GONE);
+                tvErreurCommentaires.setText("Avis indisponibles");
+                tvErreurCommentaires.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

@@ -7,6 +7,7 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONObject;
 
@@ -14,7 +15,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.lang.reflect.Type;
 
+import fr.app.application.model.Commentaire;
 import fr.app.application.model.Visite;
 import fr.app.application.utils.ApiConfig;
 import fr.app.application.utils.SessionManager;
@@ -22,14 +25,14 @@ import fr.app.application.utils.VolleyUtils;
 
 public class VisiteController {
 
-    private static final String ENDPOINT_VISITES      = "/api/visites";
+    private static final String ENDPOINT_VISITES = "/api/visites";
     private static final String ENDPOINT_COMMENTAIRES = "/api/commentaires";
-    private static final String ENDPOINT_ME           = "/api/me";
+    private static final String ENDPOINT_ME = "/api/me";
+    private static final String TAG = "VisiteController";
+    private static final String ENDPOINT_COMMENTAIRES_LIEU = "/api/commentaires?lieu.id=";
 
     private final Context contexte;
     private final Gson    gson;
-
-    // --- Interfaces de Callback ---
 
     public interface CallbackVisites {
         void onSucces(List<Visite> visites);
@@ -263,5 +266,49 @@ public class VisiteController {
                 }
         );
         VolleyUtils.getInstance(contexte).addToRequestQueue(requete);
+    }
+
+    public interface CallbackCommentaires {
+        void onSucces(List<Commentaire> commentaires);
+        void onErreur(String messageErreur);
+    }
+
+    public void recupererCommentairesDuLieu(int lieuId, CallbackCommentaires callback) {
+        String url = ApiConfig.getInstance(contexte).getUrl(ENDPOINT_COMMENTAIRES_LIEU) + lieuId;
+
+        StringRequest requete = new StringRequest(
+                Request.Method.GET,
+                url,
+                reponse -> {
+                    Log.d("API_COMMENTAIRES", reponse);
+                    try {
+                        Type type = new TypeToken<List<Commentaire>>() {}.getType();
+                        List<Commentaire> commentaires;
+
+                        com.google.gson.JsonElement element = gson.fromJson(reponse, com.google.gson.JsonElement.class);
+
+                        if (element.isJsonArray()) {
+                            commentaires = gson.fromJson(element.getAsJsonArray(), type);
+                        } else {
+                            com.google.gson.JsonArray membres = element
+                                    .getAsJsonObject()
+                                    .getAsJsonArray("hydra:member");
+                            commentaires = gson.fromJson(membres, type);
+                        }
+
+                        callback.onSucces(commentaires);
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "Erreur parsing commentaires", e);
+                        callback.onErreur("Impossible de lire les commentaires");
+                    }
+                },
+                erreur -> {
+                    Log.w(TAG, "Erreur réseau commentaires lieu " + lieuId);
+                    callback.onErreur("Commentaires indisponibles");
+                }
+        );
+
+        VolleyUtils.getInstance(contexte).getRequestQueue().add(requete);
     }
 }

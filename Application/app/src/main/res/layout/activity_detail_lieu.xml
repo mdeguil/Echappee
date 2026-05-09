@@ -458,6 +458,78 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/sectionCommentaires"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <View style="@style/SectionDivider"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp" />
+
+                <LinearLayout
+                    style="@style/SectionHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@android:drawable/ic_dialog_info"
+                        android:contentDescription="Avis"
+                        app:tint="?attr/colorPrimary"
+                        android:layout_marginEnd="8dp" />
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Avis des visiteurs"
+                        android:textAppearance="?attr/textAppearanceTitleMedium"
+                        android:textColor="?attr/colorPrimary" />
+
+                    <TextView
+                        android:id="@+id/tvNoteMoyenne"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceLabelLarge"
+                        android:textColor="?attr/colorPrimary"
+                        android:textStyle="bold"
+                        tools:text="★ 4,2 (12)" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/progressBarCommentaires"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="8dp"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvErreurCommentaires"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="20dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="?attr/colorError"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:visibility="gone"
+                    tools:text="Avis indisponibles" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerCommentaires"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"
+                    android:clipToPadding="false"
+                    android:paddingBottom="8dp"
+                    tools:listitem="@layout/item_commentaire"
+                    tools:itemCount="3" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/sectionPhotos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
